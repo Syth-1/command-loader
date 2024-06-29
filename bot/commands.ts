@@ -1,3 +1,4 @@
+import { isArray } from "lodash";
 import { 
     CommandsBuffer, 
     Transformer,
@@ -8,20 +9,23 @@ import {
     standardNumberTransformer,
     standardBooleanTransformer,
 
+    parentVarName,
+
     type BaseTransformer,
+    type parent
 } from "./internals";
 
 
 interface commandName { 
     name? : string, 
-    alias? : Array<string>
+    alias? : NonEmptyArray<string>
 }
+
+type parentArg = AtLeastOne<parent>
 
 type reflectTypes = "Number" | "Boolean" | "String" | "Object"
 
 type Class = { new(...args: any[]): any; }; 
-
-const parentVarName : string = '__parent__'
 
 export class Commands {
 
@@ -69,14 +73,42 @@ export class Commands {
             
             console.log(parent)
 
-            CommandsBuffer.addCommandBuffer([commandName, ...alias], parent, descriptor.value)
+            CommandsBuffer.addCommandBuffer([commandName, ...alias], methodClass, descriptor.value)
         }
     }
 
-    static parent(parent? : string): Function {
+    static parent(parent? :  string | parentArg | NonEmptyArray<string>): Function {
         return function(targetClass: Class): any {
             console.log(targetClass.name)
-            Object.defineProperty(targetClass, parentVarName, { value: parent || targetClass.name })
+
+            const parentVar = (() => {
+
+                if (typeof parent == "object") {
+                    if (isArray(parent)) {
+                        return parent
+                    }
+
+                    const parentVar = []
+
+                    if (parent.parent) parentVar.push(...parent.parent)
+                    if (parent.name) parentVar.push(parent.name)
+
+                    return parentVar
+                } else {
+                    return [parent || targetClass.name]
+                }
+                
+            })().map((str, index) => {
+                const trimmedString = str.trim().toLocaleLowerCase()
+
+                if (trimmedString == "" || /\s/.test(trimmedString)) throw Error(`Invalid parent input : '${str}' - full parent var: '${parent}'. error occured for class: '${targetClass.name}' for index ${index}`)
+
+                return trimmedString
+            })
+
+            console.log({parentVar})
+
+            Object.defineProperty(targetClass, parentVarName, { value: parentVar })
             return targetClass
         }
     }
@@ -151,4 +183,8 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
     }
 
     return transformer(ctx, stringParser)
+}
+
+function checkWhitespace(str : string) {
+    return /\s/.test(str);
 }

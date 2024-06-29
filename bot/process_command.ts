@@ -1,4 +1,4 @@
-import { ModuleLoader } from "./internals";
+import { ModuleLoader, StringParser } from "./internals";
 
 export class ProcessCommands<T extends new (...args : any) => BaseContext> { 
 
@@ -7,8 +7,8 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
     private contextCls : T
 
     params : { 
-        preCheck? : (msg : string, a : InstanceType<T>) => boolean | string | undefined,
-        onCommand? : (msg : string, a : InstanceType<T>) => boolean | string | undefined
+        preCheck? : (ctx : InstanceType<T>, msg : string) => boolean | string | undefined,
+        onCommand? : (ctx : InstanceType<T>, msg : string) => boolean | string | undefined
     }
 
     constructor(prefix : string, contextCls : T, params : ProcessCommands<T>["params"] = {}) { 
@@ -28,7 +28,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         context.msg = msg;
         context.moduleLoader = this.moduleLoader
         
-        const preCheck = this.params.preCheck?.apply(this, [msg, context as InstanceType<T>])
+        const preCheck = this.params.preCheck?.apply(this, [context as InstanceType<T>, msg])
 
         if (typeof preCheck == 'boolean') {
             if (!preCheck) return
@@ -38,43 +38,59 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         
         msg = msg.substring(this.prefix.length)
 
-        const command = msg.split(' ')[0].toLowerCase()
+        let commandParser = new StringParser(msg, false)
+
+        const command = commandParser.getArg().toLocaleLowerCase()
 
         if (command.length == 0) return;
 
-        const funcOrParent = this.moduleLoader.commands[command]
+        let funcOrParent = this.moduleLoader.commands[command]
         
         if (funcOrParent == undefined) return
         
-        msg = msg.substring(command.length);
+        let func = tryGetSubCommand(funcOrParent, commandParser)
         
-        let func : CommandFunction; 
+        if (func == undefined) return; 
 
-        if (typeof funcOrParent == 'object') {
-            const subcommand = msg.split(' ')[0]
-
-            if (command.length == 0) return;
-
-            func = funcOrParent[subcommand]
-            
-            if (func == undefined) return 
-
-            msg = msg.substring(subcommand.length);
-        } else { 
-            func = funcOrParent
-        }
-
-        const onCommandCheck = this.params.onCommand?.apply(this, [msg, context as InstanceType<T>])
+        const onCommandCheck = this.params.onCommand?.apply(this, [context as InstanceType<T>, commandParser.getRestOfString()])
         
         if (typeof onCommandCheck == 'boolean') {
             if (!onCommandCheck) return
         } else if (typeof onCommandCheck == 'string') {
-            msg = onCommandCheck
+            commandParser = new StringParser(onCommandCheck)
         }
 
         context.content = msg
 
         func.apply(this, [context, msg])
+    }
+}
+
+
+function tryGetSubCommand(commandObj :  CommandFunction | NestedCommandObj, commandParser : StringParser) {
+    
+    while (true) {
+        if (typeof commandObj == 'object') {
+
+            const subcommand = commandParser.getArg().toLocaleLowerCase()
+
+            if (subcommand.length == 0) {
+                if (commandObj.onDefaultCommand != undefined) {
+                   return commandObj.onDefaultCommand as CommandFunction // default command is just command function without any additional params.
+                }
+                return
+            }
+
+            // handle subcommand not found!
+            if (commandObj.commands[subcommand] == undefined) {
+                if (commandObj.onCommandNotFound != undefined) {
+                    commandObj.onCommandNotFound(subcommand)
+                    return
+                }
+            }
+
+            commandObj = commandObj.commands[subcommand]
+        } else return commandObj
     }
 }
 

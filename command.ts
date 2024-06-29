@@ -2,7 +2,7 @@
 import { Commands } from "./bot/commands"
 import { type Context } from "./context"
 
-@Commands.parent("hmm")
+@Commands.parent(["hello"])
 class Test{
 
     @Commands.command({alias : ["hello", "world"]})
@@ -34,5 +34,10 @@ class Test{
                 }
             }
         )
+    }
+
+
+    async onDefaultCommand(ctx : Context) { 
+        console.log("default command heck ye!")
     }
 }

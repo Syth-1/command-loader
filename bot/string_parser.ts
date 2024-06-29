@@ -24,9 +24,11 @@ const quoteRegex : quoteRegex = Object.fromEntries(
 
 export class StringParser{ 
     private internalString : string
+    private throwError : boolean
 
-    constructor(str : string) { 
-        this.internalString = str; 
+    constructor(str : string, throwError = true) { 
+        this.internalString = str;
+        this.throwError = throwError
     }
 
     splitStr(str : string) : Array<string> { 
@@ -48,7 +50,7 @@ export class StringParser{
             this.extractQuotedString(arg)
         }
 
-        if (arg == '') throw new CommandError.EndOfArgs("END OF STRING")
+        if (arg == '' && this.throwError) throw new CommandError.EndOfArgs("END OF STRING")
 
         return arg
     }

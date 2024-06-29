@@ -1,45 +1,43 @@
 // we first store the commands into a commands buffer incase there's an error when loading the file,
 // we can simply clear the buffer without making changes to the actual commands list. 
 
-import { cloneDeep } from "lodash";
-
 // due to the fact we dont export classes, we have to use a command buffer to load the commands into, for module loader to read from!
 
 export class CommandsBuffer { 
-    private static commands : Commands = {}
+    private static commands : CommandBufferMap = new Map()
 
     static clearCache() { 
-        this.commands = {}; 
+        this.commands = new Map(); 
     }
 
-    static addCommandBuffer(commandName : Array<string>, parent : string | undefined, func : CommandFunction) {
-        commandName.forEach(name => {
-            const error = () => Error(`Command "${name}" already exists! (func: ${func.name} - existing func: ${this.commands[name].name})`) 
+    static addCommandBuffer(commandName : Array<string>, cls : Class, func : CommandFunction) {
 
-            name = name.toLowerCase(); 
+        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${func.name} - existing func: ${this.commands.get(cls)?.[name].name} in class : ${cls.name})`) 
+        
+        if (!this.commands.has(cls)) {
+            this.commands.set(cls, {})
+        }
 
-            if (name in this.commands)
-                throw error()
+        let commandsObj : CommandMap = this.commands.get(cls)!
 
-            if (parent) {
-                if (this.commands[parent] == undefined) {
-                    this.commands[parent] = {}
-                } else if (typeof this.commands[parent] == 'function') {
-                    throw error()
-                } else if (name in this.commands[parent]) {
-                    throw Error(`subcommand '${name}' already exists in parent command '${parent}'`)
-                }
-                
-                (this.commands[parent] as CommandObj)[name] = func
-            } else
-                this.commands[name] = func
-        });
+        commandName.forEach((name) => {
+            name = name.toLowerCase();
+
+            if (name == "" || /\s/.test(name)) throw error(name, "contains an empty string!")
+            if (commandsObj.hasOwnProperty(name)) throw error(name, "already exists!")
+
+            commandsObj[name] = func
+        })
     }
 
     static readCommandBuffer() {
-        return cloneDeep(this.commands)
+        return this.commands
     }
 }
 
+export const parentVarName : string = '__parent__'
 
-
+export interface parent {
+    name? : string, 
+    parent? : string | Array<string>
+}

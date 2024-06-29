@@ -1,16 +1,25 @@
 import { cloneDeep } from 'lodash'
-import { CommandsBuffer } from './internals'
+import { CommandsBuffer, parentVarName, type parent } from './internals'
 import Queue from './utils/queue'
 
 interface ModuleCommandsObj { 
     [key: string] : ModuleCommands
 }
 
-type ModuleCommands = Array<string | SubCommand>
-
-type SubCommand = {
-    prefix : string, 
+interface baseCommands { 
     commands : Array<string>
+    subcommands : SubCommandObj
+}
+
+interface ModuleCommands extends baseCommands {
+    class : Array<Class>
+}
+
+
+type SubCommand = Converter<MergeTwo<baseCommands, NestedCommandObj>, Function | undefined, boolean> 
+
+interface SubCommandObj {
+    [key: string] : SubCommand
 }
 
 // creates a module > command tree, this is for adding and removing commands only!
@@ -29,7 +38,7 @@ type EventType = "load" | "unload" | "reload"
 export class ModuleLoader {
 
     moduleCommandTree : ModuleCommandsObj = {}
-    commands : Commands = {}
+    commands : CommandsCollection = {}
 
     private events = new Queue<Event>()
 
@@ -59,12 +68,12 @@ export class ModuleLoader {
     private async loadFile(file : string) { 
         await import(file + '?q=' + Math.random()) // dirty load
 
-        const commands = CommandsBuffer.readCommandBuffer()
+        const commandsBufferMap = CommandsBuffer.readCommandBuffer()
 
         CommandsBuffer.clearCache()
 
         // throws error if check failed.
-        return this.checkCommands(commands, file)
+        return this.checkCommands(commandsBufferMap, file)
     }
 
 
@@ -74,9 +83,15 @@ export class ModuleLoader {
  
         for (let file of files) {
             try {
-                if (file in this.moduleCommandTree) throw Error(`file '${file}' has already been loaded!`)
+                if (this.moduleCommandTree.hasOwnProperty(file)) throw Error(`file '${file}' has already been loaded!`)
 
                 const {copyCommands, moduleTree} = await this.loadFile(file)
+
+                console.log("copy commands")
+                console.log(copyCommands)
+
+                console.log("module tree")
+                console.log(moduleTree)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
@@ -95,7 +110,7 @@ export class ModuleLoader {
 
         for (const file of files) {
             try {
-                if (file in this.moduleCommandTree == false) 
+                if (!this.moduleCommandTree.hasOwnProperty(file)) 
                     throw Error(`module ${file} has not been loaded!`)
 
                     this.commands = this.deleteModulesCommands(file)
@@ -132,70 +147,166 @@ export class ModuleLoader {
         await callback(errors)
     }
 
-    private checkCommands(commands : Commands, module : string) {
+    private checkCommands(commandBufferMap : CommandBufferMap, module : string) {
         const copyCommands = this.deleteModulesCommands(module) // our compare object
-        const moduleTree : ModuleCommands = []
-
-        for (const [command, funcOrSubCommands] of Object.entries(commands)) {
-
-            if (typeof funcOrSubCommands === 'object') { // if its a subcommand
-
-                const subCommandTree : SubCommand = {
-                    "prefix" : command,
-                    "commands" : []
-                }
-
-                for (const [subCommands, func] of Object.entries(funcOrSubCommands)) {
-                    if (subCommands in copyCommands[command]) {
-                        throw Error(`subcommand '${subCommands}' already exists in parent command '${command}'\nmodule: ${module}`)
-                    }
-
-                    if (copyCommands[command] == undefined) 
-                        copyCommands[command] = {};
-
-                    (copyCommands[command] as CommandObj)[subCommands] = func
-                    subCommandTree.commands.push(subCommands)
-                }
-
-                moduleTree.push(subCommandTree)
-                continue;
-            }
-
-            if (command in copyCommands) {
-                throw Error(`command '${command}' already exists!\nmodule: ${module}`)
-            }
-
-            const func = funcOrSubCommands
-            copyCommands[command] = func
-            moduleTree.push(command)
+        const moduleTree : ModuleCommands = {
+            class : [],
+            commands : [],
+            subcommands : {}
         }
+
+        for (const [cls, commandsToAdd] of commandBufferMap.entries()) {
+            moduleTree.class.push(cls)
+
+            const parent : NonEmptyArray<string> | undefined = Object.getOwnPropertyDescriptor(cls, parentVarName)?.value || Object.getOwnPropertyDescriptor(cls.constructor, parentVarName)?.value
+
+            if (parent != undefined) {
+                this.addChildCommands(parent, commandsToAdd, cls, moduleTree.subcommands, copyCommands)
+                continue
+            }
+
+            this.addCommands(commandsToAdd, copyCommands, moduleTree.commands)
+       }
 
         return {copyCommands, moduleTree}
     }
 
-    private deleteModulesCommands(module : string) { 
+    private addChildCommands(parent : NonEmptyArray<string>, commandsToAdd : CommandMap, cls : Class, commands : SubCommandObj, nestedCommandObj : CommandsCollection) {
+        // returns commands tree + commandsObj
+
+        const child = parent.shift()!
+
+        if (!commands.hasOwnProperty(child)) {
+            commands[child] = {
+                commands : [],
+                onDefaultCommand : false,
+                onCommandNotFound : false,
+                subcommands : {}
+            } 
+        }
+
+        if (!nestedCommandObj.hasOwnProperty(child)) {
+            nestedCommandObj[child] = {
+                commands : {},
+                onDefaultCommand : undefined,
+                onCommandNotFound : undefined, 
+            }
+        } else {
+            if (typeof nestedCommandObj[child] == "function") {
+                throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${(nestedCommandObj[child] as () => void).name}'`)
+            }
+        }
+    
+        const childObj = commands[child]
+        const commandObj = (nestedCommandObj[child] as NestedCommandObj)
+
+        if (parent.length != 0) { 
+            // if parent recursively add
+
+            this.addChildCommands(parent, commandsToAdd, cls, childObj.subcommands, commandObj.commands)
+            // we use refs to add to the object.
+
+            return { childObj, commandObj }
+        }
+
+        this.addCommands(commandsToAdd, commandObj.commands, childObj.commands)
+        // we use refs to add to the object.
+
+        type booleanKeysOfSubcommand = KeysOfType<SubCommand, boolean>
+
+        const functionKeys : Array<booleanKeysOfSubcommand> = [
+            'onDefaultCommand',
+            "onCommandNotFound",
+        ]
+
+        for (const key of functionKeys) {
+            const typedKey = key as keyof Class;
+            const func : Function | undefined = cls[typedKey] || cls.prototype?.[typedKey]
+
+            if (func == undefined) continue
+
+            childObj[key] = true as any // ts does not recognize its keys for booleans only
+            commandObj[typedKey] = func
+        }
+    }
+
+    private addCommands(commandsToAdd : CommandMap, commandCollection : CommandsCollection, moduleTreeCommandList : Array<string>) { 
+        for (const [command, func] of Object.entries(commandsToAdd)) { 
+            if (commandCollection.hasOwnProperty(command)) {
+                throw Error(`command '${command}' already exists!`)
+            }
+
+            commandCollection[command] = func
+            moduleTreeCommandList.push(command)
+        }
+    }
+
+    private deleteModulesCommands(module : string) {
         const copyCommands = cloneDeep(this.commands)
         const moduleTree : ModuleCommands | undefined = this.moduleCommandTree[module]
         
         if ( moduleTree == undefined ) return copyCommands
 
-        for (const commands of moduleTree) {
-            if (typeof commands == 'object') { // if its a subcommand
-                for (const subCommand of commands.commands) {
-                    delete (copyCommands[commands.prefix] as CommandObj)[subCommand]
-                }
-
-                if (Object.keys(copyCommands[commands.prefix]).length == 0) {
-                    delete copyCommands[commands.prefix] // clean up empty objects.
-                }
-
-                continue
-            }
-
+        for (const commands of moduleTree.commands) {
             delete copyCommands[commands]
         }
+
+        for (const [prefix, child] of Object.entries(moduleTree.subcommands)) {
+            const childCommandObj = copyCommands[prefix] as NestedCommandObj
+
+            this.deleteSubCommand(child, childCommandObj)
+
+            if (this.checkChildEmpty(childCommandObj)) {
+                delete copyCommands[prefix]
+            }
+        } 
         
         return copyCommands
+    }
+
+    private deleteSubCommandObj(subcommandObj : SubCommandObj, copyCommands : NestedCommandObj) {
+        for (const [prefix, child] of Object.entries(subcommandObj)) {
+            const childCommandObj = copyCommands.commands[prefix] as NestedCommandObj
+
+            this.deleteSubCommand(child, childCommandObj)
+
+            if (this.checkChildEmpty(childCommandObj)) {
+                delete copyCommands.commands[prefix]
+            }
+        } 
+    } 
+
+    private deleteSubCommand(subcommand : SubCommand, copyCommands : NestedCommandObj) {
+        if (subcommand.onDefaultCommand) copyCommands.onDefaultCommand = undefined
+        if (subcommand.onCommandNotFound) copyCommands.onCommandNotFound = undefined
+
+        for (const commands of subcommand.commands) {
+            delete copyCommands.commands[commands]
+        }
+
+        this.deleteSubCommandObj(subcommand.subcommands, copyCommands)
+
+        for (const [key, val] of Object.entries(subcommand)) {
+            if (typeof val == "boolean" && !val) // we expect any boolean to be nullable.
+                copyCommands[key as keyof NestedCommandObj] = undefined as any
+        }
+    }
+
+    private checkChildEmpty(copyCommands : NestedCommandObj) { 
+        for (const [key, val] of Object.entries(copyCommands)) {
+            switch (typeof val) {
+                case 'function' : {
+                    if (val != undefined) return false
+                    break
+                }
+                case 'object' : {
+                    if (Object.keys(val).length != 0) return false
+                    break
+                }
+            }
+        }
+
+        return true
     }
 
     private async handleEvent(event : Event) { 
