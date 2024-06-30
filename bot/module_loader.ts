@@ -16,7 +16,12 @@ interface ModuleCommands extends baseCommands {
 }
 
 
-type SubCommand = Converter<MergeTwo<baseCommands, NestedCommandObj>, Function | undefined, boolean> 
+type PartialCommands = {
+    cls : Class, 
+    command : Function
+}
+
+type SubCommand = Converter<MergeTwo<baseCommands, NestedCommandObj>, PartialCommands | undefined, boolean> 
 
 interface SubCommandObj {
     [key: string] : SubCommand
@@ -90,17 +95,8 @@ export class ModuleLoader {
 
                 const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
 
-                console.log("copy commands")
-                console.log(copyCommands)
-
-                console.log("module tree")
-                console.log(moduleTree)
-
-                console.log("event listener")
-                console.log(listenerEvents)
-
                 for (const cls of moduleTree.class) {
-                    const loadFunc = this.getFunctionFromCls(cls, "onLoad")
+                    const loadFunc = getFunctionFromCls(cls, "onLoad")
                     loadFunc?.()
                 }
 
@@ -126,7 +122,7 @@ export class ModuleLoader {
                     throw Error(`module ${file} has not been loaded!`)
 
                     for (const cls of this.moduleCommandTree[file].class) {
-                        const unLoadFunc = this.getFunctionFromCls(cls, "onUnload")
+                        const unLoadFunc = getFunctionFromCls(cls, "onUnload")
                         unLoadFunc?.()
                     }
 
@@ -151,13 +147,22 @@ export class ModuleLoader {
                 const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
 
                 for (const cls of moduleTree.class) {
-                    const loadFunc = this.getFunctionFromCls(cls, "onLoad")
+                    const loadFunc = getFunctionFromCls(cls, "onLoad")
                     loadFunc?.()
                 }
 
                 await this.unloadModuleHandler(files, callbackError => {
                     errors.push(...callbackError)
                 })
+
+                console.log("copy commands")
+                console.log(copyCommands)
+
+                console.log("module tree")
+                console.log(moduleTree.subcommands)
+
+                console.log("event listener")
+                console.log(listenerEvents)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
@@ -189,7 +194,7 @@ export class ModuleLoader {
                 continue
             }
 
-            this.addCommands(commandsToAdd, copyCommands, moduleTree.commands)
+            this.addCommands(commandsToAdd, copyCommands, moduleTree.commands, cls)
        }
 
         return {copyCommands, moduleTree}
@@ -216,8 +221,8 @@ export class ModuleLoader {
                 onCommandNotFound : undefined, 
             }
         } else {
-            if (typeof nestedCommandObj[child] === "function") {
-                throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${(nestedCommandObj[child] as () => void).name}'`)
+            if (nestedCommandObj[child].hasOwnProperty("cls")) {
+                throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${((nestedCommandObj[child] as Commands).command as () => void).name}'`)
             }
         }
     
@@ -233,7 +238,7 @@ export class ModuleLoader {
             return { childObj, commandObj }
         }
 
-        this.addCommands(commandsToAdd, commandObj.commands, childObj.commands)
+        this.addCommands(commandsToAdd, commandObj.commands, childObj.commands, cls)
         // we use refs to add to the object.
 
         type booleanKeysOfSubcommand = KeysOfType<SubCommand, boolean>
@@ -244,23 +249,31 @@ export class ModuleLoader {
         ]
 
         for (const key of functionKeys) {
-            const typedKey = key as keyof Class;
+            const typedKey = key as keyof Class || undefined;
             const func : Function | undefined = cls[typedKey] || cls.prototype?.[typedKey]
 
             if (func === undefined) continue
 
             childObj[key] = true as any // ts does not recognize its keys for booleans only
-            commandObj[typedKey] = func
+
+            //@ts-ignore
+            commandObj[typedKey] = {
+                cls : cls,
+                command : func
+            }
         }
     }
 
-    private addCommands(commandsToAdd : CommandMap, commandCollection : CommandsCollection, moduleTreeCommandList : Array<string>) { 
+    private addCommands(commandsToAdd : CommandMap, commandCollection : CommandsCollection, moduleTreeCommandList : Array<string>, cls : Class) { 
         for (const [command, func] of Object.entries(commandsToAdd)) { 
             if (commandCollection.hasOwnProperty(command)) {
                 throw Error(`command '${command}' already exists!`)
             }
 
-            commandCollection[command] = func
+            commandCollection[command] = {
+                cls : cls, 
+                command : func
+            }
             moduleTreeCommandList.push(command)
         }
     }
@@ -352,7 +365,8 @@ export class ModuleLoader {
         }
     }
 
-    private getFunctionFromCls(cls : Class, funcName : string) : Function | undefined { 
-        return cls[funcName as keyof Class] || cls.prototype?.[funcName]
-    }
+}
+
+export function getFunctionFromCls(cls : Class, funcName : string) : Function | undefined { 
+    return cls[funcName as keyof Class] || cls.prototype?.[funcName]
 }

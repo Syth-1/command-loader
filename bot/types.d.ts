@@ -2,14 +2,25 @@
 type CommandMap = { [key: string] : CommandFunction }
 
 interface CommandsCollection { 
-    [key: string] : (CommandFunction | NestedCommandObj)
+    [key: string] : (Commands | NestedCommandObj)
+}
+
+type Commands = {
+    cls : Class,
+    command : CommandFunction
 }
 
 type CommandFunction = (ctx : Context, ...args : unknown) => any
 
 type NestedCommandObj = {
-    onCommandNotFound? : (commandName : string) => void,
-    onDefaultCommand? : (ctx : Context) => any,
+    onCommandNotFound? : {
+        cls : Class,
+        command : (commandName : string) => void,
+    }
+    onDefaultCommand? : {
+        cls : Class, 
+        command : (ctx : Context) => any
+    },
     commands : CommandsCollection
 }
 

@@ -1,4 +1,4 @@
-import { EventNames, ModuleLoader, StringParser } from "./internals";
+import { EventNames, ModuleLoader, StringParser, getFunctionFromCls } from "./internals";
 
 export class ProcessCommands<T extends new (...args : any) => BaseContext> { 
 
@@ -42,28 +42,91 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         
         if (funcOrParent === undefined) return
         
-        let func = tryGetSubCommand(funcOrParent, commandParser)
+        let func = this.tryGetSubCommand(funcOrParent, commandParser, context)
         
         if (func === undefined) return; 
 
-        const onCommandCheck = this.callEvent(EventNames.onCommand, context, commandParser.getRestOfString())
-        
+        context.content = commandParser.getRestOfString()
+
+        const onCommandCheck = this.callEvent(EventNames.onCommand, context)
+
         if (typeof onCommandCheck === 'boolean') {
             if (!onCommandCheck) return
         } else if (typeof onCommandCheck === 'string') {
-            commandParser = new StringParser(onCommandCheck)
+            context.content = onCommandCheck
         }
 
-        context.content = commandParser.getRestOfString()
+        const onLocalCommand = getFunctionFromCls(func.cls, "onCommand")
 
+        if (onLocalCommand != undefined) {
+            const onLocalCommndCheck = this.tryExecuteCommand(func.cls, onLocalCommand, context)
+
+            if (typeof onLocalCommndCheck === 'boolean') {
+                if (!onLocalCommndCheck) return
+            } else if (typeof onLocalCommndCheck === 'string') {
+                context.content = onCommandCheck
+            }
+        }
+
+        this.tryExecuteCommand(func.cls, func.command, context, context.content)
+    }
+
+    
+    private tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context) {
+        
+        while (true) {
+            if (typeof commandObj === 'object' && !commandObj.hasOwnProperty("cls")) {
+                
+                let nestedCommandObj = commandObj as NestedCommandObj
+                const subcommand = commandParser.getArg().toLocaleLowerCase()
+                
+                if (subcommand.length === 0) {
+                    if (nestedCommandObj.onDefaultCommand != undefined) {
+                        return nestedCommandObj.onDefaultCommand as Commands // default command is just command function without any additional params.
+                    }
+                    return
+                }
+                
+                // handle subcommand not found!
+                if (nestedCommandObj.commands[subcommand] === undefined) {
+                    if (nestedCommandObj.onCommandNotFound != undefined) {
+                        const onCommandNotFound = nestedCommandObj.onCommandNotFound
+                        
+                        this.tryExecuteCommand(onCommandNotFound.cls, onCommandNotFound.command, ctx)
+                        return
+                    }
+                }
+                
+                commandObj = nestedCommandObj.commands[subcommand]
+            } else return commandObj as Commands
+        }
+    }
+    
+    private tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
         try {
-            func(context, context.content)
+            func(ctx, ...args)
         } catch (e) {
             if (!(e instanceof Error)) {
                 e = new Error(e as any)
             }
 
-            this.callEvent(EventNames.error, e)
+            const onErrorFunc = (getFunctionFromCls(cls, "onError"))
+
+            if (onErrorFunc != undefined) {
+                // try execute local on error function 
+                try { 
+                    onErrorFunc(e, ctx)
+                    return
+                } catch (e) {
+                    if (!(e instanceof Error)) {
+                        e = new Error(e as any)
+                    }
+
+                    this.callEvent(EventNames.error, e, ctx)
+                } 
+            }
+
+            this.callEvent(EventNames.error, e, ctx)
         }
     }
 
@@ -71,53 +134,25 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
             const funcArr = moduleEvents[event]
             if (funcArr === undefined) continue
-
+    
             for (const func of funcArr) {
                 try {
                     const value = func(...args)
-
+    
                     if (value !== undefined) return value // assume if a value is returned, we early return!
                 } catch { 
                     if (event === EventNames.error) continue
-
+    
                     this.callEvent(
                         EventNames.error, 
                         Error(`calling function: '${func.name}' for event '${event}' failed! args passed: ${args}`)
                     )
                 }
             }
-            
         }
     }
 }
 
-
-function tryGetSubCommand(commandObj :  CommandFunction | NestedCommandObj, commandParser : StringParser) {
-    
-    while (true) {
-        if (typeof commandObj === 'object') {
-
-            const subcommand = commandParser.getArg().toLocaleLowerCase()
-
-            if (subcommand.length === 0) {
-                if (commandObj.onDefaultCommand != undefined) {
-                   return commandObj.onDefaultCommand as CommandFunction // default command is just command function without any additional params.
-                }
-                return
-            }
-
-            // handle subcommand not found!
-            if (commandObj.commands[subcommand] === undefined) {
-                if (commandObj.onCommandNotFound != undefined) {
-                    commandObj.onCommandNotFound(subcommand)
-                    return
-                }
-            }
-
-            commandObj = commandObj.commands[subcommand]
-        } else return commandObj
-    }
-}
 
 export class BaseContext implements Context {
 

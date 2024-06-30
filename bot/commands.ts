@@ -117,6 +117,14 @@ export class Commands {
 }
 
 export class Listener {
+    static command(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        CommandsBuffer.addEvent(EventNames.onCommand, descriptor.value)
+    }
+    
+    static precheck(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        CommandsBuffer.addEvent(EventNames.preCheck, descriptor.value)
+    }
+
     static error(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
         CommandsBuffer.addEvent(EventNames.error, descriptor.value)
     }

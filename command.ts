@@ -2,7 +2,7 @@
 import { Commands, Listener } from "./bot/commands"
 import { type Context } from "./context"
 
-@Commands.parent("hello")
+@Commands.parent(["hello"])
 class Test{
 
     @Commands.command({alias : ["hello", "world"]})
@@ -33,8 +33,18 @@ class Test{
         )
     }
 
+    @Listener.precheck
+    async check() { 
+        console.log("precheck!")
+    }
+
+    @Listener.command
+    async command() { 
+        console.log("on command!")
+    }
+
     @Listener.error
-    async onError(err : Error, ctx? : Context) { 
+    async globalError(err : Error, ctx? : Context) { 
         console.log("an error occured!", err.message)
     }
 
@@ -49,4 +59,12 @@ class Test{
     async onUnload() { 
         console.log("I HAVE UNLOADED!")
     }
+
+    async onError() { 
+        console.log("this is a local error message")
+    }
+
+    async onCommand() { 
+        console.log("ive invoked a command!!")
+    } 
 }
