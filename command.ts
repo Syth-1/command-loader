@@ -1,8 +1,8 @@
 
-import { Commands } from "./bot/commands"
+import { Commands, Listener } from "./bot/commands"
 import { type Context } from "./context"
 
-@Commands.parent(["hello"])
+@Commands.parent("hello")
 class Test{
 
     @Commands.command({alias : ["hello", "world"]})
@@ -14,18 +14,15 @@ class Test{
     test2(ctx : Context, number : number) {
         console.log("^^")
         console.log(number)
-
-        // @ts-ignore
-        console.log(Test.__parent__)
-
     }
 
     @Commands.command()
     async reload(ctx : Context, file : string) {
+        console.log({file})
 
         await ctx.moduleLoader.scheduleEvent(
             "reload", 
-            "../command.ts", 
+            "/command.ts", 
             (error) => {
                 if (error.length > 0) {
                     console.log(error)
@@ -36,6 +33,10 @@ class Test{
         )
     }
 
+    @Listener.error
+    async onError(err : Error, ctx? : Context) { 
+        console.log("an error occured!", err.message)
+    }
 
     async onDefaultCommand(ctx : Context) { 
         console.log("default command heck ye!")

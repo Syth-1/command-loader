@@ -5,9 +5,11 @@
 
 export class CommandsBuffer { 
     private static commands : CommandBufferMap = new Map()
+    private static events : ModuleEvent = {}
 
     static clearCache() { 
-        this.commands = new Map(); 
+        this.commands = new Map();
+        this.events = {}
     }
 
     static addCommandBuffer(commandName : Array<string>, cls : Class, func : CommandFunction) {
@@ -23,15 +25,24 @@ export class CommandsBuffer {
         commandName.forEach((name) => {
             name = name.toLowerCase();
 
-            if (name == "" || /\s/.test(name)) throw error(name, "contains an empty string!")
+            if (name === "" || /\s/.test(name)) throw error(name, "contains an empty string!")
             if (commandsObj.hasOwnProperty(name)) throw error(name, "already exists!")
 
             commandsObj[name] = func
         })
     }
 
+    static addEvent(eventName : string, func : Function) {
+        if (!this.events.hasOwnProperty(eventName)) this.events[eventName] = []
+        this.events[eventName].push(func)
+    }
+
     static readCommandBuffer() {
         return this.commands
+    }
+
+    static readEventBuffer() { 
+        return this.events
     }
 }
 

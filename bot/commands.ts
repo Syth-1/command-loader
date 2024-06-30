@@ -10,6 +10,7 @@ import {
     standardBooleanTransformer,
 
     parentVarName,
+    EventNames,
 
     type BaseTransformer,
     type parent
@@ -35,9 +36,9 @@ export class Commands {
             let commandName : string
             let alias : Array<string> = []
 
-            if (commandInfo == undefined) {
+            if (commandInfo === undefined) {
                 commandName = methodName;
-            } else if (typeof commandInfo == "string") {
+            } else if (typeof commandInfo === "string") {
                 commandName = commandInfo
             } else {
                 commandName = commandInfo.name || methodName
@@ -62,9 +63,9 @@ export class Commands {
 
                 const validatedArgs = validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)
 
-                if (validatedArgs == undefined) return; 
+                if (validatedArgs === undefined) return; 
 
-                const retVal = childFunction.apply(this, [ctx, ...validatedArgs]);
+                const retVal = childFunction.apply(methodClass.prototype || methodClass, [ctx, ...validatedArgs]);
 
                 return retVal
             }
@@ -83,7 +84,7 @@ export class Commands {
 
             const parentVar = (() => {
 
-                if (typeof parent == "object") {
+                if (typeof parent === "object") {
                     if (isArray(parent)) {
                         return parent
                     }
@@ -101,7 +102,7 @@ export class Commands {
             })().map((str, index) => {
                 const trimmedString = str.trim().toLocaleLowerCase()
 
-                if (trimmedString == "" || /\s/.test(trimmedString)) throw Error(`Invalid parent input : '${str}' - full parent var: '${parent}'. error occured for class: '${targetClass.name}' for index ${index}`)
+                if (trimmedString === "" || /\s/.test(trimmedString)) throw Error(`Invalid parent input : '${str}' - full parent var: '${parent}'. error occured for class: '${targetClass.name}' for index ${index}`)
 
                 return trimmedString
             })
@@ -113,6 +114,19 @@ export class Commands {
         }
     }
 }
+
+export class Listener {
+    static error(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        CommandsBuffer.addEvent(EventNames.error, descriptor.value)
+    }
+
+    static custom(eventName : string ) {
+        return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
+            CommandsBuffer.addEvent(eventName, descriptor.value)
+        }
+    }
+}
+
 
 function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<null | BaseTransformer<any>>, argsRequired : number) {
 
@@ -183,8 +197,4 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
     }
 
     return transformer(ctx, stringParser)
-}
-
-function checkWhitespace(str : string) {
-    return /\s/.test(str);
 }

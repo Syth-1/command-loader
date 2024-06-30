@@ -33,7 +33,7 @@ export class StringParser{
 
     splitStr(str : string) : Array<string> { 
         const preSplit = str.split(/\s/gm, 1)[0]
-        const postSplit = str.substring(preSplit == '' ? 1 : preSplit.length);
+        const postSplit = str.substring(preSplit === '' ? 1 : preSplit.length);
 
         return [preSplit, postSplit]
     }
@@ -42,7 +42,7 @@ export class StringParser{
         let [arg, str] = this.splitStr(this.internalString)
         this.internalString = str
 
-        if (this.internalString.length != 0 && arg == '') {
+        if (this.internalString.length != 0 && arg === '') {
             return this.getArg(quoted)
         }
 
@@ -50,7 +50,7 @@ export class StringParser{
             this.extractQuotedString(arg)
         }
 
-        if (arg == '' && this.throwError) throw new CommandError.EndOfArgs("END OF STRING")
+        if (arg === '' && this.throwError) throw new CommandError.EndOfArgs("END OF STRING")
 
         return arg
     }
@@ -61,7 +61,7 @@ export class StringParser{
 
                 const quotedStringRegex = this.internalString.match(quoteRegex[startQuote].endQuoteRegex)
 
-                if (quotedStringRegex == null || quotedStringRegex.length == 0) {
+                if (quotedStringRegex === null || quotedStringRegex.length === 0) {
                     continue
                 }
 

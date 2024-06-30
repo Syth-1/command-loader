@@ -39,11 +39,13 @@ export class ModuleLoader {
 
     moduleCommandTree : ModuleCommandsObj = {}
     commands : CommandsCollection = {}
+    eventListener : ListenerEvents = {}
 
     private events = new Queue<Event>()
 
     constructor() {
         // we use an IIFE in constructor so there is never more than one consumer running at any given time within ModuleLoader instance. 
+
         (async () => {
             while (true) { 
                 const event = await this.events.get()
@@ -69,11 +71,12 @@ export class ModuleLoader {
         await import(file + '?q=' + Math.random()) // dirty load
 
         const commandsBufferMap = CommandsBuffer.readCommandBuffer()
+        const listenerEvents = CommandsBuffer.readEventBuffer()
 
         CommandsBuffer.clearCache()
 
         // throws error if check failed.
-        return this.checkCommands(commandsBufferMap, file)
+        return {...this.checkCommands(commandsBufferMap, file), listenerEvents}
     }
 
 
@@ -85,7 +88,7 @@ export class ModuleLoader {
             try {
                 if (this.moduleCommandTree.hasOwnProperty(file)) throw Error(`file '${file}' has already been loaded!`)
 
-                const {copyCommands, moduleTree} = await this.loadFile(file)
+                const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
 
                 console.log("copy commands")
                 console.log(copyCommands)
@@ -93,8 +96,12 @@ export class ModuleLoader {
                 console.log("module tree")
                 console.log(moduleTree)
 
+                console.log("event listener")
+                console.log(listenerEvents)
+
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
+                this.eventListener[file] = listenerEvents
 
             } catch (error : unknown) {
                 errors.push(error as Error)
@@ -115,6 +122,7 @@ export class ModuleLoader {
 
                     this.commands = this.deleteModulesCommands(file)
                     delete this.moduleCommandTree[file]
+                    delete this.eventListener[file]
 
             } catch (error : unknown) {
                 errors.push(error as Error)
@@ -129,8 +137,11 @@ export class ModuleLoader {
         const errors : Array<Error> = []
 
         for (let file of files) {
+
+            const errorLength = errors.length
+
             try {
-                const {copyCommands, moduleTree} = await this.loadFile(file)
+                const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
 
                 await this.unloadModuleHandler(files, callbackError => {
                     errors.push(...callbackError)
@@ -138,6 +149,7 @@ export class ModuleLoader {
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
+                this.eventListener[file] = listenerEvents
 
             } catch (error : unknown) {
                 errors.push(error as Error)
@@ -192,7 +204,7 @@ export class ModuleLoader {
                 onCommandNotFound : undefined, 
             }
         } else {
-            if (typeof nestedCommandObj[child] == "function") {
+            if (typeof nestedCommandObj[child] === "function") {
                 throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${(nestedCommandObj[child] as () => void).name}'`)
             }
         }
@@ -223,7 +235,7 @@ export class ModuleLoader {
             const typedKey = key as keyof Class;
             const func : Function | undefined = cls[typedKey] || cls.prototype?.[typedKey]
 
-            if (func == undefined) continue
+            if (func === undefined) continue
 
             childObj[key] = true as any // ts does not recognize its keys for booleans only
             commandObj[typedKey] = func
@@ -245,7 +257,7 @@ export class ModuleLoader {
         const copyCommands = cloneDeep(this.commands)
         const moduleTree : ModuleCommands | undefined = this.moduleCommandTree[module]
         
-        if ( moduleTree == undefined ) return copyCommands
+        if ( moduleTree === undefined ) return copyCommands
 
         for (const commands of moduleTree.commands) {
             delete copyCommands[commands]
@@ -287,7 +299,7 @@ export class ModuleLoader {
         this.deleteSubCommandObj(subcommand.subcommands, copyCommands)
 
         for (const [key, val] of Object.entries(subcommand)) {
-            if (typeof val == "boolean" && !val) // we expect any boolean to be nullable.
+            if (typeof val === "boolean" && !val) // we expect any boolean to be nullable.
                 copyCommands[key as keyof NestedCommandObj] = undefined as any
         }
     }

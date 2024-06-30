@@ -1,4 +1,4 @@
-import { ModuleLoader, StringParser } from "./internals";
+import { EventNames, ModuleLoader, StringParser } from "./internals";
 
 export class ProcessCommands<T extends new (...args : any) => BaseContext> { 
 
@@ -6,16 +6,10 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
     readonly moduleLoader : ModuleLoader
     private contextCls : T
 
-    params : { 
-        preCheck? : (ctx : InstanceType<T>, msg : string) => boolean | string | undefined,
-        onCommand? : (ctx : InstanceType<T>, msg : string) => boolean | string | undefined
-    }
-
-    constructor(prefix : string, contextCls : T, params : ProcessCommands<T>["params"] = {}) { 
+    constructor(prefix : string, contextCls : T) { 
         this.moduleLoader = new ModuleLoader()
         this.contextCls = contextCls
         this.prefix = prefix
-        this.params = params
     }
 
     processCommands(msg : string, ...args : ConstructorParameters<T>) {
@@ -28,11 +22,11 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         context.msg = msg;
         context.moduleLoader = this.moduleLoader
         
-        const preCheck = this.params.preCheck?.apply(this, [context as InstanceType<T>, msg])
+        const preCheck = this.callEvent(EventNames.preCheck, context, msg)
 
-        if (typeof preCheck == 'boolean') {
+        if (typeof preCheck === 'boolean') {
             if (!preCheck) return
-        } else if (typeof preCheck == 'string') {
+        } else if (typeof preCheck === 'string') {
             msg = preCheck
         }
         
@@ -42,27 +36,58 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
 
         const command = commandParser.getArg().toLocaleLowerCase()
 
-        if (command.length == 0) return;
+        if (command.length === 0) return;
 
         let funcOrParent = this.moduleLoader.commands[command]
         
-        if (funcOrParent == undefined) return
+        if (funcOrParent === undefined) return
         
         let func = tryGetSubCommand(funcOrParent, commandParser)
         
-        if (func == undefined) return; 
+        if (func === undefined) return; 
 
-        const onCommandCheck = this.params.onCommand?.apply(this, [context as InstanceType<T>, commandParser.getRestOfString()])
+        const onCommandCheck = this.callEvent(EventNames.onCommand, context, commandParser.getRestOfString())
         
-        if (typeof onCommandCheck == 'boolean') {
+        if (typeof onCommandCheck === 'boolean') {
             if (!onCommandCheck) return
-        } else if (typeof onCommandCheck == 'string') {
+        } else if (typeof onCommandCheck === 'string') {
             commandParser = new StringParser(onCommandCheck)
         }
 
-        context.content = msg
+        context.content = commandParser.getRestOfString()
 
-        func.apply(this, [context, msg])
+        try {
+            func(context, context.content)
+        } catch (e) {
+            if (!(e instanceof Error)) {
+                e = new Error(e as any)
+            }
+
+            this.callEvent(EventNames.error, e)
+        }
+    }
+
+    callEvent( event : string, ...args : any ) { 
+        for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
+            const funcArr = moduleEvents[event]
+            if (funcArr === undefined) continue
+
+            for (const func of funcArr) {
+                try {
+                    const value = func(...args)
+
+                    if (value !== undefined) return value // assume if a value is returned, we early return!
+                } catch { 
+                    if (event === EventNames.error) continue
+
+                    this.callEvent(
+                        EventNames.error, 
+                        Error(`calling function: '${func.name}' for event '${event}' failed! args passed: ${args}`)
+                    )
+                }
+            }
+            
+        }
     }
 }
 
@@ -70,11 +95,11 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
 function tryGetSubCommand(commandObj :  CommandFunction | NestedCommandObj, commandParser : StringParser) {
     
     while (true) {
-        if (typeof commandObj == 'object') {
+        if (typeof commandObj === 'object') {
 
             const subcommand = commandParser.getArg().toLocaleLowerCase()
 
-            if (subcommand.length == 0) {
+            if (subcommand.length === 0) {
                 if (commandObj.onDefaultCommand != undefined) {
                    return commandObj.onDefaultCommand as CommandFunction // default command is just command function without any additional params.
                 }
@@ -82,7 +107,7 @@ function tryGetSubCommand(commandObj :  CommandFunction | NestedCommandObj, comm
             }
 
             // handle subcommand not found!
-            if (commandObj.commands[subcommand] == undefined) {
+            if (commandObj.commands[subcommand] === undefined) {
                 if (commandObj.onCommandNotFound != undefined) {
                     commandObj.onCommandNotFound(subcommand)
                     return

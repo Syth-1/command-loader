@@ -26,6 +26,14 @@ interface Context {
     className  : string
 }
 
+interface ModuleEvent {
+    [key: string] : Array<Function>
+}
+
+interface ListenerEvents {
+    [file: string] : ModuleEvent
+}
+
 type Complete<T> = {
     [P in keyof Required<T>]: Pick<T, P> extends Required<Pick<T, P>> ? T[P] : (T[P] | undefined);
 }
