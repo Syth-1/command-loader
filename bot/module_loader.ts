@@ -99,6 +99,11 @@ export class ModuleLoader {
                 console.log("event listener")
                 console.log(listenerEvents)
 
+                for (const cls of moduleTree.class) {
+                    const loadFunc = this.getFunctionFromCls(cls, "onLoad")
+                    loadFunc?.()
+                }
+
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
                 this.eventListener[file] = listenerEvents
@@ -120,6 +125,11 @@ export class ModuleLoader {
                 if (!this.moduleCommandTree.hasOwnProperty(file)) 
                     throw Error(`module ${file} has not been loaded!`)
 
+                    for (const cls of this.moduleCommandTree[file].class) {
+                        const unLoadFunc = this.getFunctionFromCls(cls, "onUnload")
+                        unLoadFunc?.()
+                    }
+
                     this.commands = this.deleteModulesCommands(file)
                     delete this.moduleCommandTree[file]
                     delete this.eventListener[file]
@@ -137,11 +147,13 @@ export class ModuleLoader {
         const errors : Array<Error> = []
 
         for (let file of files) {
-
-            const errorLength = errors.length
-
             try {
                 const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
+
+                for (const cls of moduleTree.class) {
+                    const loadFunc = this.getFunctionFromCls(cls, "onLoad")
+                    loadFunc?.()
+                }
 
                 await this.unloadModuleHandler(files, callbackError => {
                     errors.push(...callbackError)
@@ -338,5 +350,9 @@ export class ModuleLoader {
                 break
             }
         }
+    }
+
+    private getFunctionFromCls(cls : Class, funcName : string) : Function | undefined { 
+        return cls[funcName as keyof Class] || cls.prototype?.[funcName]
     }
 }

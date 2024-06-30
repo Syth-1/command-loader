@@ -41,4 +41,12 @@ class Test{
     async onDefaultCommand(ctx : Context) { 
         console.log("default command heck ye!")
     }
+
+    async onLoad() { 
+        console.log("I HAVE LOADED!")
+    }
+
+    async onUnload() { 
+        console.log("I HAVE UNLOADED!")
+    }
 }
