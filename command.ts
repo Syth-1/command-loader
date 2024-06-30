@@ -22,7 +22,7 @@ class Test{
 
         await ctx.moduleLoader.scheduleEvent(
             "reload", 
-            "/command.ts", 
+            "@/command.ts", 
             (error) => {
                 if (error.length > 0) {
                     console.log(error)

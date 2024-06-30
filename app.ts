@@ -1,7 +1,7 @@
 import { ProcessCommands } from './bot/process_command'
 import { Context } from './context'
 
-const files = ["../command.ts"]
+const files = ["@/command.ts"]
 
 async function main() {
     const commandProcessor = new ProcessCommands<typeof Context>("/", Context)
