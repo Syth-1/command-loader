@@ -2,7 +2,7 @@
 import { Commands, Listener } from "./bot/commands"
 import { type Context } from "./context"
 
-class Test{
+class TestCommands{
     @Commands.command({alias : ["hello", "world"]})
     test(ctx : Context)  { 
         console.log("hello world")
@@ -68,8 +68,31 @@ class Test{
 
 @Commands.parent("prefix")
 class AnotherClass { 
+
     @Commands.command({name : "hi"})
     test(ctx : Context)  { 
         console.log("hello world")
     }
+
+}
+
+
+@Commands.parent(["1", "2", "3", "4",  "5"])
+class AndAnotherClass {
+
+    @Commands.command({name : "foo"})
+    test(ctx : Context)  { 
+        console.log("bar")
+    }
+
+}
+
+@Commands.parent(["1", "2", "3"])
+class NestedCommands { 
+
+    @Commands.command({name : "foo"})
+    test(ctx : Context)  { 
+        console.log("bar")
+    }
+
 }
