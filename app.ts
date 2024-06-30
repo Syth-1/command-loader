@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ProcessCommands } from './bot/process_command'
 
 import { Context } from './context'

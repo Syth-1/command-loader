@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { isArray } from "lodash";
 import { 
     CommandsBuffer, 
