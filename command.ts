@@ -45,10 +45,6 @@ class TestCommands{
         console.log("an error occured!", err.message)
     }
 
-    async onDefaultCommand(ctx : Context) { 
-        console.log("default command heck ye!")
-    }
-
     async onLoad() { 
         console.log("I HAVE LOADED!")
     }
@@ -74,6 +70,10 @@ class AnotherClass {
         console.log("hello world")
     }
 
+    async onDefaultCommand(ctx : Context) { 
+        console.log("default command heck ye!")
+    }
+
 }
 
 
@@ -94,5 +94,4 @@ class NestedCommands {
     test(ctx : Context)  { 
         console.log("bar")
     }
-
 }
