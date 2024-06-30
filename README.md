@@ -16,13 +16,13 @@ This project was created using `bun init` in bun v1.1.7. [Bun](https://bun.sh) i
 
 # Example usage
 
-to invoke a command:
+To invoke a command:
 
 ```
 /hello
 ```
 
-to relaod: 
+To relaod: 
 
 ```
 /reload
