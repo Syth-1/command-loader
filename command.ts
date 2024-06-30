@@ -73,9 +73,7 @@ class AnotherClass {
     async onDefaultCommand(ctx : Context) { 
         console.log("default command heck ye!")
     }
-
 }
-
 
 @Commands.parent(["1", "2", "3", "4",  "5"])
 class AndAnotherClass {
@@ -84,7 +82,6 @@ class AndAnotherClass {
     test(ctx : Context)  { 
         console.log("bar")
     }
-
 }
 
 @Commands.parent(["1", "2", "3"])
