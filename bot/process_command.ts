@@ -173,9 +173,3 @@ export class BaseContext implements Context {
         this.moduleLoader = undefined
     }
 }
-
-// this.name = ""
-// this.channel = ""    
-// this.id = ""
-// this.vip = 0
-// this.level = 1
