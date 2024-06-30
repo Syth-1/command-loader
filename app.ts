@@ -1,7 +1,6 @@
 import 'reflect-metadata'
 import { ProcessCommands } from './bot/process_command'
 
-import type { ModuleLoader } from './bot/module_loader'
 import { Context } from './context'
 
 const files = ["../command.ts"]
