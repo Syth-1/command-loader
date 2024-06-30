@@ -72,8 +72,6 @@ export class Commands {
             }
 
             const parent : string | undefined = Object.getOwnPropertyDescriptor(methodClass, parentVarName)?.value
-            
-            console.log(parent)
 
             CommandsBuffer.addCommandBuffer([commandName, ...alias], methodClass, descriptor.value)
         }
@@ -81,7 +79,6 @@ export class Commands {
 
     static parent(parent? :  string | parentArg | NonEmptyArray<string>): Function {
         return function(targetClass: Class): any {
-            console.log(targetClass.name)
 
             const parentVar = (() => {
 
@@ -107,8 +104,6 @@ export class Commands {
 
                 return trimmedString
             })
-
-            console.log({parentVar})
 
             Object.defineProperty(targetClass, parentVarName, { value: parentVar })
             return targetClass

@@ -2,9 +2,7 @@
 import { Commands, Listener } from "./bot/commands"
 import { type Context } from "./context"
 
-@Commands.parent(["hello"])
 class Test{
-
     @Commands.command({alias : ["hello", "world"]})
     test(ctx : Context)  { 
         console.log("hello world")
@@ -17,8 +15,7 @@ class Test{
     }
 
     @Commands.command()
-    async reload(ctx : Context, file : string) {
-        console.log({file})
+    async reload(ctx : Context) {
 
         await ctx.moduleLoader.scheduleEvent(
             "reload", 
@@ -67,4 +64,12 @@ class Test{
     async onCommand() { 
         console.log("ive invoked a command!!")
     } 
+}
+
+@Commands.parent("prefix")
+class AnotherClass { 
+    @Commands.command({name : "hi"})
+    test(ctx : Context)  { 
+        console.log("hello world")
+    }
 }

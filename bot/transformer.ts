@@ -54,10 +54,6 @@ export class NumberTransformer implements BaseTransformer<number>, Complete<numb
             10
         )
 
-        console.log("this:")
-        console.log(this)
-        console.log("^^^^")
-
         if (isNaN(number)) {
             throw new CommandError.ParseError("Invalid Number Entered!")
         }

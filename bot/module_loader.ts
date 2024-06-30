@@ -155,15 +155,6 @@ export class ModuleLoader {
                     errors.push(...callbackError)
                 })
 
-                console.log("copy commands")
-                console.log(copyCommands)
-
-                console.log("module tree")
-                console.log(moduleTree.subcommands)
-
-                console.log("event listener")
-                console.log(listenerEvents)
-
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
                 this.eventListener[file] = listenerEvents
