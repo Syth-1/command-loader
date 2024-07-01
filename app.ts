@@ -18,7 +18,7 @@ async function main() {
     )
 
     for await (const line of console) {
-        commandProcessor.processCommands(line, commandProcessor.moduleLoader)
+        commandProcessor.processCommands(line)
     }
 }
 

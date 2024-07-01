@@ -73,6 +73,11 @@ class AnotherClass {
     async onDefaultCommand(ctx : Context) { 
         console.log("default command heck ye!")
     }
+
+    async onCommand() { 
+        console.log("on command!!")
+        return false
+    }
 }
 
 @Commands.parent(["1", "2", "3", "4",  "5"])

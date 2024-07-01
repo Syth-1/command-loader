@@ -12,17 +12,19 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         this.prefix = prefix
     }
 
-    processCommands(msg : string, ...args : ConstructorParameters<T>) {
+    async processCommands(msg : string, ...args : ConstructorParameters<T>) {
         msg = msg.trim();
-
-        if (!msg.startsWith(this.prefix)) return;
-
+        
         const context = new this.contextCls(...args)
-
+        
         context.msg = msg;
         context.moduleLoader = this.moduleLoader
         
-        const preCheck = this.callEvent(EventNames.preCheck, context, msg)
+        this.callEvent(EventNames.onMessage, context)
+
+        if (!msg.startsWith(this.prefix)) return;
+        
+        const preCheck = await this.callEvent(EventNames.preCheck, context, msg)
 
         if (typeof preCheck === 'boolean') {
             if (!preCheck) return
@@ -48,7 +50,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
 
         context.content = commandParser.getRestOfString()
 
-        const onCommandCheck = this.callEvent(EventNames.onCommand, context)
+        const onCommandCheck = await this.callEvent(EventNames.onCommand, context)
 
         if (typeof onCommandCheck === 'boolean') {
             if (!onCommandCheck) return
@@ -59,7 +61,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         const onLocalCommand = getFunctionFromCls(func.cls, "onCommand")
 
         if (onLocalCommand != undefined) {
-            const onLocalCommndCheck = this.tryExecuteCommand(func.cls, onLocalCommand, context)
+            const onLocalCommndCheck = await this.tryExecuteCommand(func.cls, onLocalCommand, context)
 
             if (typeof onLocalCommndCheck === 'boolean') {
                 if (!onLocalCommndCheck) return
@@ -102,15 +104,15 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         }
     }
     
-    private tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
+    private async tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
         try {
-            func(ctx, ...args)
+            return await func(ctx, ...args)
         } catch (e) {
             if (!(e instanceof Error)) {
                 e = new Error(e as any)
             }
 
-            const onErrorFunc = (getFunctionFromCls(cls, "onError"))
+            const onErrorFunc = await (getFunctionFromCls(cls, "onError"))
 
             if (onErrorFunc != undefined) {
                 // try execute local on error function 
@@ -130,14 +132,14 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         }
     }
 
-    callEvent( event : string, ...args : any ) { 
+    async callEvent( event : string, ...args : any ) { 
         for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
             const funcArr = moduleEvents[event]
             if (funcArr === undefined) continue
     
             for (const func of funcArr) {
                 try {
-                    const value = func(...args)
+                    const value = await func(...args)
     
                     if (value !== undefined) return value // assume if a value is returned, we early return!
                 } catch { 
@@ -161,7 +163,7 @@ export class BaseContext implements Context {
     
     methodName : string
     className  : string
-    moduleLoader : ModuleLoader | undefined
+    moduleLoader! : ModuleLoader
 
 
     constructor() {
@@ -170,6 +172,6 @@ export class BaseContext implements Context {
 
         this.methodName = ""
         this.className = ""
-        this.moduleLoader = undefined
+        this.moduleLoader = undefined as any
     }
 }

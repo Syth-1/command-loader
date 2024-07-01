@@ -31,7 +31,7 @@ type Class = { new(...args: any[]): any; };
 
 export class Commands {
 
-    static command(commandInfo? : commandName | string, ...rest : Array<BaseTransformer<any>>) {
+    static command(commandInfo? : commandName | string, ...rest : Array<undefined | null | BaseTransformer<any>>) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
 
             let commandName : string
@@ -112,6 +112,10 @@ export class Commands {
 }
 
 export class Listener {
+    static message(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        CommandsBuffer.addEvent(EventNames.onMessage, descriptor.value)
+    }
+
     static command(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
         CommandsBuffer.addEvent(EventNames.onCommand, descriptor.value)
     }
@@ -132,7 +136,7 @@ export class Listener {
 }
 
 
-function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<null | BaseTransformer<any>>, argsRequired : number) {
+function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
 
     if (argsRequired < 0) { 
         throw Error("Invalid Number of Arguments, is Argument for CTX provided?")
@@ -171,9 +175,9 @@ function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectType
 }
 
 
-function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflectTypes, constraint : BaseTransformer<any> | null, index : number) { 
+function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflectTypes, constraint : BaseTransformer<any> | null | undefined, index : number) { 
     
-    if (constraint instanceof Transformer) {
+    if (constraint !== null && typeof constraint == 'object') {
         return constraint.handleConstraint(ctx, stringParser)
     }
 

@@ -59,11 +59,11 @@ export class NumberTransformer implements BaseTransformer<number>, Complete<numb
         }
 
         if (this.min) {
-            number = Math.min(number, this.min)
+            number = Math.max(number, this.min)
         }
 
         if (this.max) {
-            number = Math.max(number, this.max)
+            number = Math.min(number, this.max)
         }
 
         return number

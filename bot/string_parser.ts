@@ -79,7 +79,16 @@ export class StringParser{
     }
 
     getRestOfString() {
-        return this.internalString.trim()
+        const restOfString = this.internalString.trim()
+
+        console.log("getting rest of string:")
+        console.log(restOfString)
+
+        if (restOfString === '' && this.throwError) {
+            throw new CommandError.EndOfArgs("END OF STRING")
+        }
+
+        return restOfString
     }
 
     getMultiple(amount : number) { 
