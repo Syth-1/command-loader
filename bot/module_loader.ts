@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash'
+import { cloneDeepWith } from 'lodash'
 import { CommandsBuffer, parentVarName, type parent } from './internals'
 import Queue from './utils/queue'
 
@@ -270,7 +270,10 @@ export class ModuleLoader {
     }
 
     private deleteModulesCommands(module : string) {
-        const copyCommands = cloneDeep(this.commands)
+        const copyCommands = cloneDeepWith(this.commands, val => {
+            if (val?.hasOwnProperty("cls") && val?.hasOwnProperty("command") && typeof val["command"] == 'function') return val
+        })
+        
         const moduleTree : ModuleCommands | undefined = this.moduleCommandTree[module]
         
         if ( moduleTree === undefined ) return copyCommands
