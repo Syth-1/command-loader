@@ -151,7 +151,7 @@ export class ModuleLoader {
                     loadFunc?.()
                 }
 
-                await this.unloadModuleHandler(files, callbackError => {
+                await this.unloadModuleHandler([file], callbackError => {
                     errors.push(...callbackError)
                 })
 
