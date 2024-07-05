@@ -72,7 +72,11 @@ export class ModuleLoader {
         })
     }
 
-    private async loadFile(file : string) { 
+    private async loadFile(file : string) {
+
+        for (const file of Object.keys(require.cache))
+            delete require.cache[file]
+
         await import(file + '?q=' + Math.random()) // dirty load
 
         const commandsBufferMap = CommandsBuffer.readCommandBuffer()
