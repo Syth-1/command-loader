@@ -1,6 +1,7 @@
 import { cloneDeepWith } from 'lodash'
-import { CommandsBuffer, parentVarName, type parent } from './internals'
+import { CommandsBuffer, parentVarName } from './internals'
 import Queue from './utils/queue'
+import path from 'node:path'
 
 interface ModuleCommandsObj { 
     [key: string] : ModuleCommands
@@ -74,8 +75,11 @@ export class ModuleLoader {
 
     private async loadFile(file : string) {
 
-        for (const file of Object.keys(require.cache))
+        for (const file of Object.keys(require.cache)) {
+            if (this.checkSkipImport(file)) continue
+
             delete require.cache[file]
+        }
 
         await import(file + '?q=' + Math.random()) // dirty load
 
@@ -88,6 +92,22 @@ export class ModuleLoader {
         return {...this.checkCommands(commandsBufferMap, file), listenerEvents}
     }
 
+    private checkSkipImport(file : string) { 
+        const cwd = path.dirname(Bun.main)
+        const dontRemove = [
+            path.join(cwd, "node_module"), 
+            import.meta.dirname
+        ]
+
+        if (!file.startsWith(cwd)) return true
+
+        for (const pth of dontRemove) {
+            if (file.startsWith(pth))
+                return true
+        }
+
+        return false
+    }
 
     private async loadModuleHandler(files : Array<string>, callback : eventCallBack) {
 
