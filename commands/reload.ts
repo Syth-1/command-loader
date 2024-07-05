@@ -26,6 +26,8 @@ class Reload {
 async function reloadAll(ctx : Context) { 
     console.log("reloading all modules!")
 
+    ctx.moduleLoader.purgeImportCache()
+
     const files = await getModuleFiles()
 
     const removeFiles = Object.keys(ctx.moduleLoader.moduleCommandTree).filter(x => files.indexOf(x) === -1)

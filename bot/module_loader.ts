@@ -75,12 +75,6 @@ export class ModuleLoader {
 
     private async loadFile(file : string) {
 
-        for (const file of Object.keys(require.cache)) {
-            if (this.checkSkipImport(file)) continue
-
-            delete require.cache[file]
-        }
-
         await import(file + '?q=' + Math.random()) // dirty load
 
         const commandsBufferMap = CommandsBuffer.readCommandBuffer()
@@ -92,22 +86,31 @@ export class ModuleLoader {
         return {...this.checkCommands(commandsBufferMap, file), listenerEvents}
     }
 
-    private checkSkipImport(file : string) { 
-        const cwd = path.dirname(Bun.main)
-        const dontRemove = [
-            path.join(cwd, "node_module"), 
-            import.meta.dirname
-        ]
+    purgeImportCache() { 
+        for (const file of Object.keys(require.cache)) {
+            if (this.checkSkipImport(file)) continue
 
-        if (!file.startsWith(cwd)) return true
-
-        for (const pth of dontRemove) {
-            if (file.startsWith(pth))
-                return true
+            delete require.cache[file]
         }
-
-        return false
     }
+
+    private checkSkipImport(filePath: string) { 
+        const currentDir = path.dirname(Bun.main);
+        const pathsToSkip = [
+            path.join(currentDir, "node_module"), 
+            import.meta.dirname
+        ];
+    
+        if (!filePath.startsWith(currentDir)) return true;
+    
+        for (const pathToSkip of pathsToSkip) {
+            if (filePath.startsWith(pathToSkip))
+                return true;
+        }
+    
+        return false;
+    }
+    
 
     private async loadModuleHandler(files : Array<string>, callback : eventCallBack) {
 
@@ -387,4 +390,27 @@ export class ModuleLoader {
 
 export function getFunctionFromCls(cls : Class, funcName : string) : Function | undefined { 
     return cls[funcName as keyof Class] || cls.prototype?.[funcName]
+}
+
+function checkSkipImport(filePath: string) { 
+    const cwd = path.dirname(Bun.main);
+    const pathsToSkip = [
+        path.join(cwd, "node_module"), 
+        import.meta.dirname
+    ];
+
+    if (!filePath.startsWith(cwd)) return true;
+
+    for (const pathToSkip of pathsToSkip) {
+        if (filePath.startsWith(pathToSkip))
+            return true;
+    }
+
+    return false;
+}
+
+for (const file of Object.keys(require.cache)) {
+    if (checkSkipImport(file)) continue
+
+    delete require.cache[file]
 }
