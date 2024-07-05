@@ -1,6 +1,6 @@
 
-import { Commands, Listener } from "./bot/commands"
-import { type Context } from "./context"
+import { Commands, Listener } from "@/bot/commands"
+import { type Context } from "@/context"
 
 class TestCommands{
     @Commands.command({alias : ["hello", "world"]})
@@ -12,22 +12,6 @@ class TestCommands{
     test2(ctx : Context, number : number) {
         console.log("^^")
         console.log(number)
-    }
-
-    @Commands.command()
-    async reload(ctx : Context) {
-
-        await ctx.moduleLoader.scheduleEvent(
-            "reload", 
-            "@/command.ts", 
-            (error) => {
-                if (error.length > 0) {
-                    console.log(error)
-                } else {
-                    console.log("loaded files!")
-                }
-            }
-        )
     }
 
     @Listener.precheck

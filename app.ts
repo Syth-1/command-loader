@@ -1,14 +1,15 @@
+import { sleep } from 'bun'
 import { ProcessCommands } from './bot/process_command'
-import { Context } from './context'
-
-const files = ["@/command.ts"]
+import { Context, getModuleFiles } from './context'
 
 async function main() {
     const commandProcessor = new ProcessCommands<typeof Context>("/", Context)
 
+    console.log(".-.")
+
     await commandProcessor.moduleLoader.scheduleEvent(
         "load", 
-        files, 
+        await getModuleFiles(), 
         error => {
             if (error.length > 0)
                 console.log(error)

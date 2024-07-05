@@ -51,7 +51,7 @@ export class Commands {
             
             const ctxArg = argsInfo.shift() // first item is for context!
 
-            if (ctxArg != 'Object') {
+            if (ctxArg != 'Object' && ctxArg != "Context" as any) {
                 throw Error(`Invalid Argument Found: first argument for '${methodName}' does not appear to be for Context!`)
             }
 
