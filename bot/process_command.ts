@@ -20,7 +20,15 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         context.msg = msg;
         context.moduleLoader = this.moduleLoader
         
-        this.callEvent(EventNames.onMessage, context)
+        const onMsg = await this.callEvent(EventNames.onMessage, context)
+
+        if (typeof onMsg === 'boolean') {
+            if (!onMsg) return
+        } else if (typeof onMsg === 'string') {
+            msg = onMsg
+        } else {
+            msg = context.msg
+        }
 
         if (!msg.startsWith(this.prefix)) return;
         
@@ -30,6 +38,8 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
             if (!preCheck) return
         } else if (typeof preCheck === 'string') {
             msg = preCheck
+        } else {
+            msg = context.msg
         }
         
         msg = msg.substring(this.prefix.length)
