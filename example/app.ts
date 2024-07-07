@@ -1,5 +1,5 @@
 import { sleep } from 'bun'
-import { ProcessCommands } from './bot/process_command'
+import { ProcessCommands } from '@/bot/process_command'
 import { Context, getModuleFiles } from './context'
 
 async function main() {

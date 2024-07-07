@@ -27,6 +27,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         } else if (typeof onMsg === 'string') {
             msg = onMsg
         } else {
+            console.log(context)
             msg = context.msg
         }
 
@@ -155,7 +156,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
                 } catch { 
                     if (event === EventNames.error) continue
     
-                    this.callEvent(
+                    await this.callEvent(
                         EventNames.error, 
                         Error(`calling function: '${func.name}' for event '${event}' failed! args passed: ${args}`)
                     )
