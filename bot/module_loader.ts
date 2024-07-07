@@ -95,20 +95,7 @@ export class ModuleLoader {
     }
 
     private checkSkipImport(filePath: string) { 
-        const currentDir = path.dirname(Bun.main);
-        const pathsToSkip = [
-            path.join(currentDir, "node_module"), 
-            import.meta.dirname
-        ];
-    
-        if (!filePath.startsWith(currentDir)) return true;
-    
-        for (const pathToSkip of pathsToSkip) {
-            if (filePath.startsWith(pathToSkip))
-                return true;
-        }
-    
-        return false;
+        return (filePath.includes(path.join(import.meta.dir, "command_buffer")))
     }
     
 
