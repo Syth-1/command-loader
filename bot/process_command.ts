@@ -27,7 +27,6 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         } else if (typeof onMsg === 'string') {
             msg = onMsg
         } else {
-            console.log(context)
             msg = context.msg
         }
 
