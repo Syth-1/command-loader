@@ -6,7 +6,7 @@ export const moduleFolder = "commands"
 
 export async function getModuleFiles() {
     return (await readdir(`./${moduleFolder}`))
-        .map(file => path.join(import.meta.dir, moduleFolder, file))
+        .map(file => import.meta.resolve(`@/${path.join(moduleFolder, file)}`))
 }
 
 export class Context extends BaseContext {
