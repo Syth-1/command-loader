@@ -4,8 +4,8 @@
 export class CommandsBuffer { 
     
     static clearCache(cls : typedCls) { 
-        delete cls[commandBufferVarName]
-        delete cls[eventBufferVarName]
+        delete cls.prototype[commandBufferVarName]
+        delete cls.prototype[eventBufferVarName]
     }
 
     static addCommandBuffer(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
