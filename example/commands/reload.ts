@@ -3,7 +3,7 @@ import { StringTransformer } from "@/bot/transformer"
 import { Context, getModuleFiles, moduleFolder } from "@/context"
 import path from 'path'
 
-class Reload { 
+export class Reload { 
     @Commands.command('reload', new StringTransformer(true))
     async reload(ctx : Context, file : string) {
 

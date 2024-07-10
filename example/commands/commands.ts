@@ -2,7 +2,7 @@
 import { Commands, Listener } from "@/bot/commands"
 import { type Context } from "@/context"
 
-class TestCommands{
+export class TestCommands{
     @Commands.command({alias : ["hello", "world"]})
     test(ctx : Context)  { 
         console.log("hello world")

@@ -11,6 +11,7 @@ import {
     standardBooleanTransformer,
 
     parentVarName,
+    commandBufferVarName,
     EventNames,
 
     type BaseTransformer,
@@ -113,24 +114,24 @@ export class Commands {
 
 export class Listener {
     static message(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(EventNames.onMessage, descriptor.value)
+        CommandsBuffer.addEvent(methodClass, EventNames.onMessage, descriptor.value)
     }
 
     static command(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(EventNames.onCommand, descriptor.value)
+        CommandsBuffer.addEvent(methodClass, EventNames.onCommand, descriptor.value)
     }
     
     static precheck(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(EventNames.preCheck, descriptor.value)
+        CommandsBuffer.addEvent(methodClass, EventNames.preCheck, descriptor.value)
     }
 
     static error(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(EventNames.error, descriptor.value)
+        CommandsBuffer.addEvent(methodClass, EventNames.error, descriptor.value)
     }
 
     static custom(eventName : string ) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
-            CommandsBuffer.addEvent(eventName, descriptor.value)
+            CommandsBuffer.addEvent(methodClass, eventName, descriptor.value)
         }
     }
 }

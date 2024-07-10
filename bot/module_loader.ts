@@ -1,5 +1,5 @@
 import { cloneDeepWith } from 'lodash'
-import { CommandsBuffer, parentVarName } from './internals'
+import { CommandsBuffer, parentVarName, type typedCls } from './internals'
 import Queue from './utils/queue'
 import path from 'node:path'
 
@@ -75,12 +75,31 @@ export class ModuleLoader {
 
     private async loadFile(file : string) {
 
-        await import(file + '?q=' + Math.random()) // dirty load
+        const importedCls : Array<typedCls> = await import(file + '?q=' + Math.random()) // dirty load
 
-        const commandsBufferMap = CommandsBuffer.readCommandBuffer()
-        const listenerEvents = CommandsBuffer.readEventBuffer()
+        const commandsBufferMap : CommandBufferMap = new Map<Class, CommandMap>()
+        const listenerEvents : ModuleEvent = {}
 
-        CommandsBuffer.clearCache()
+        for (const [moduleName, cls] of Object.entries(importedCls)) {
+            if (!isClass(cls)) continue
+
+            const events = CommandsBuffer.readEventBuffer(cls)
+
+            if (events !== undefined) {
+                for (const [name, funcArr] of Object.entries(events)) {
+                    if (!listenerEvents.hasOwnProperty(name)) listenerEvents[name] = []
+
+                    listenerEvents[name].push(...funcArr)
+                }
+            }
+
+            const commandsMap = CommandsBuffer.readCommandBuffer(cls)
+
+            if (commandsMap !== undefined)
+                commandsBufferMap.set(cls, commandsMap)
+
+            CommandsBuffer.clearCache(cls)
+        }
 
         // throws error if check failed.
         return {...this.checkCommands(commandsBufferMap, file), listenerEvents}
@@ -401,3 +420,15 @@ for (const file of Object.keys(require.cache)) {
 
     delete require.cache[file]
 }
+
+// https://stackoverflow.com/a/43197340
+function isClass(obj: any): boolean {
+    const isCtorClass = obj.constructor && obj.constructor.toString().substring(0, 5) === 'class';
+    if (obj.prototype === undefined) {
+      return isCtorClass;
+    }
+    const isPrototypeCtorClass = obj.prototype.constructor 
+      && obj.prototype.constructor.toString 
+      && obj.prototype.constructor.toString().substring(0, 5) === 'class';
+    return isCtorClass || isPrototypeCtorClass;
+  }
