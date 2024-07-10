@@ -2,14 +2,14 @@ import { EventNames, ModuleLoader, StringParser, getFunctionFromCls } from "./in
 
 export class ProcessCommands<T extends new (...args : any) => BaseContext> { 
 
-    readonly prefix : string;
     readonly moduleLoader : ModuleLoader
+    readonly botSettings : BotSettings
     private contextCls : T
 
-    constructor(prefix : string, contextCls : T) { 
+    constructor(botSettings : BotSettings, contextCls : T) { 
         this.moduleLoader = new ModuleLoader()
         this.contextCls = contextCls
-        this.prefix = prefix
+        this.botSettings = botSettings
     }
 
     async processCommands(msg : string, ...args : ConstructorParameters<T>) {
@@ -30,7 +30,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
             msg = context.msg
         }
 
-        if (!msg.startsWith(this.prefix)) return;
+        if (!msg.startsWith(this.botSettings.prefix)) return;
         
         const preCheck = await this.callEvent(EventNames.preCheck, context, msg)
 
@@ -42,7 +42,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
             msg = context.msg
         }
         
-        msg = msg.substring(this.prefix.length)
+        msg = msg.substring(this.botSettings.prefix.length)
 
         let commandParser = new StringParser(msg, false)
 

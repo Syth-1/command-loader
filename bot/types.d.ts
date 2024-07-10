@@ -26,6 +26,12 @@ type NestedCommandObj = {
 
 type CommandBufferMap = Map<Class, CommandMap>
 
+interface BotSettings {
+    botName: string;
+    prefix : string;
+    moduleFolder : string;
+}
+
 type Class = { new(...args: any[]): any; };
 
 interface Context { 

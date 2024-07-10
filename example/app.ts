@@ -1,11 +1,17 @@
-import { sleep } from 'bun'
 import { ProcessCommands } from '@/bot/process_command'
-import { Context, getModuleFiles } from './context'
+import { Context, getModuleFiles, moduleFolder } from './context'
 
 async function main() {
-    const commandProcessor = new ProcessCommands<typeof Context>("/", Context)
+    const settings : BotSettings = {
+        botName : "Bot",
+        moduleFolder : moduleFolder, 
+        prefix : "/" 
+    }
 
-    console.log(".-.")
+    const commandProcessor = new ProcessCommands<typeof Context>(
+        settings, 
+        Context
+    )
 
     await commandProcessor.moduleLoader.scheduleEvent(
         "load", 
