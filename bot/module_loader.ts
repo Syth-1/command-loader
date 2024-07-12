@@ -97,8 +97,6 @@ export class ModuleLoader {
 
             if (commandsMap !== undefined)
                 commandsBufferMap.set(cls, commandsMap)
-
-            CommandsBuffer.clearCache(cls)
         }
 
         // throws error if check failed.
@@ -304,7 +302,7 @@ export class ModuleLoader {
 
     private deleteModulesCommands(module : string) {
         const copyCommands = cloneDeepWith(this.commands, val => {
-            if (val?.hasOwnProperty("cls") && val?.hasOwnProperty("command") && typeof val["command"] == 'function') return val
+            if (isCommandObj(val)) return val
         })
         
         const moduleTree : ModuleCommands | undefined = this.moduleCommandTree[module]
@@ -396,6 +394,12 @@ export class ModuleLoader {
 
 export function getFunctionFromCls(cls : Class, funcName : string) : Function | undefined { 
     return cls[funcName as keyof Class] || cls.prototype?.[funcName]
+}
+
+export function isCommandObj(val : any) { 
+    return val?.hasOwnProperty("cls") && 
+        val?.hasOwnProperty("command") && 
+        typeof val["command"] == 'function' ? true : false
 }
 
 function checkSkipImport(filePath: string) { 
