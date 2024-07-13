@@ -77,6 +77,8 @@ export class ModuleLoader {
 
         const importedCls : Array<typedCls> = await import(file + '?q=' + Math.random()) // dirty load
 
+        console.log(importedCls)
+
         const commandsBufferMap : CommandBufferMap = new Map<Class, CommandMap>()
         const listenerEvents : ModuleEvent = {}
 
@@ -97,6 +99,8 @@ export class ModuleLoader {
 
             if (commandsMap !== undefined)
                 commandsBufferMap.set(cls, commandsMap)
+        
+            CommandsBuffer.clearCache(cls)
         }
 
         // throws error if check failed.
@@ -137,6 +141,8 @@ export class ModuleLoader {
 
             } catch (error : unknown) {
                 errors.push(error as Error)
+            } finally { 
+                this.purgeImportCache()
             }
         }
 
@@ -192,6 +198,8 @@ export class ModuleLoader {
 
             } catch (error : unknown) {
                 errors.push(error as Error)
+            } finally { 
+                this.purgeImportCache()
             }
         }
 
