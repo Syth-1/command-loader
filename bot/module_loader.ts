@@ -109,16 +109,9 @@ export class ModuleLoader {
 
     purgeImportCache() { 
         for (const file of Object.keys(require.cache)) {
-            if (this.checkSkipImport(file)) continue
-
             delete require.cache[file]
         }
     }
-
-    private checkSkipImport(filePath: string) { 
-        return (filePath.includes(path.join(import.meta.dir, "command_buffer")))
-    }
-    
 
     private async loadModuleHandler(files : Array<string>, callback : eventCallBack) {
 
