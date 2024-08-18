@@ -19,6 +19,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         
         context.msg = msg;
         context.moduleLoader = this.moduleLoader
+        context.callEvent = this.callEvent
         
         const onMsg = await this.callEvent(EventNames.onMessage, context)
 
@@ -174,6 +175,7 @@ export class BaseContext implements Context {
     methodName : string
     className  : string
     moduleLoader! : ModuleLoader
+    callEvent! : (event : string, ...args : any) => Promise<any>
 
 
     constructor() {
