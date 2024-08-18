@@ -129,7 +129,7 @@ export class Listener {
         CommandsBuffer.addEvent(methodClass, EventNames.error, descriptor.value)
     }
 
-    static custom(eventName? : string ) {
+    static custom(eventName? : string) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
             CommandsBuffer.addEvent(methodClass, eventName || methodName, descriptor.value)
         }
