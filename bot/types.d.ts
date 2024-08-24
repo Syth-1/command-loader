@@ -26,22 +26,23 @@ type NestedCommandObj = {
 
 type CommandBufferMap = Map<Class, CommandMap>
 
-interface BotSettings {
-    botName: string;
-    prefix : string;
-    moduleFolder : string;
-}
-
 type Class = { new(...args: any[]): any; };
 
 interface Context { 
     msg : string
     content : string
-    moduleLoader : ModuleLoader
 
     methodName : string
     className  : string
 }
+
+interface Globals {
+    botName: string;
+    prefix : string;
+    moduleFolder : string;
+    moduleLoader : ModuleLoader
+    callEvent : (...args: any[]) => any
+} 
 
 interface ModuleEvent {
     [key: string] : Array<Function>

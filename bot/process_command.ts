@@ -1,15 +1,25 @@
 import { EventNames, ModuleLoader, StringParser, getFunctionFromCls } from "./internals";
 
-export class ProcessCommands<T extends new (...args : any) => BaseContext> { 
+type typedCls<T> = new (...args : any) => T
 
+export class ProcessCommands<
+    T extends new (...args : any) => BaseContext, 
+    U extends BaseGlobals
+>
+{ 
     readonly moduleLoader : ModuleLoader
-    readonly botSettings : BotSettings
+    readonly globals : U
     private contextCls : T
+    
 
-    constructor(botSettings : BotSettings, contextCls : T) { 
-        this.moduleLoader = new ModuleLoader()
+    constructor(contextCls : T, globals : U) { 
+        this.moduleLoader = new ModuleLoader(globals)
         this.contextCls = contextCls
-        this.botSettings = botSettings
+        
+        globals.callEvent = this.callEvent
+        globals.moduleLoader = this.moduleLoader
+        
+        this.globals = globals
     }
 
     async processCommands(msg : string, ...args : ConstructorParameters<T>) {
@@ -18,8 +28,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
         const context = new this.contextCls(...args)
         
         context.msg = msg;
-        context.moduleLoader = this.moduleLoader
-        context.callEvent = this.callEvent
+        context.globals = this.globals
         
         const onMsg = await this.callEvent(EventNames.onMessage, context)
 
@@ -31,7 +40,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
             msg = context.msg
         }
 
-        if (!msg.startsWith(this.botSettings.prefix)) return;
+        if (!msg.startsWith(this.globals.prefix)) return;
         
         const preCheck = await this.callEvent(EventNames.preCheck, context, msg)
 
@@ -43,7 +52,7 @@ export class ProcessCommands<T extends new (...args : any) => BaseContext> {
             msg = context.msg
         }
         
-        msg = msg.substring(this.botSettings.prefix.length)
+        msg = msg.substring(this.globals.prefix.length)
 
         let commandParser = new StringParser(msg, false)
 
@@ -174,9 +183,8 @@ export class BaseContext implements Context {
     
     methodName : string
     className  : string
-    moduleLoader! : ModuleLoader
+    globals! : BaseGlobals // override the types!
     callEvent! : (event : string, ...args : any) => Promise<any>
-
 
     constructor() {
         this.msg = ""
@@ -184,6 +192,16 @@ export class BaseContext implements Context {
 
         this.methodName = ""
         this.className = ""
-        this.moduleLoader = undefined as any
     }
+}
+
+export class BaseGlobals implements Globals {
+    moduleLoader! : ModuleLoader
+    callEvent! : typeof ProcessCommands.prototype.callEvent
+
+    constructor(
+        public botName : string,
+        public prefix : string,
+        public moduleFolder : string
+    ) { }
 }

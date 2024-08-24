@@ -1,7 +1,8 @@
 import { cloneDeepWith } from 'lodash'
-import { CommandsBuffer, parentVarName, type typedCls } from './internals'
+import { CommandsBuffer, parentVarName, type typedCls, type BaseGlobals } from './internals'
 import Queue from './utils/queue'
 import path from 'node:path'
+import { EventNames } from './internals'
 
 interface ModuleCommandsObj { 
     [key: string] : ModuleCommands
@@ -48,10 +49,13 @@ export class ModuleLoader {
     eventListener : ListenerEvents = {}
 
     private events = new Queue<Event>()
+    private readonly globals : BaseGlobals
 
-    constructor() {
+    constructor(globals : BaseGlobals) {
+        
+        this.globals = globals;
+
         // we use an IIFE in constructor so there is never more than one consumer running at any given time within ModuleLoader instance. 
-
         (async () => {
             while (true) { 
                 const event = await this.events.get()
@@ -60,7 +64,7 @@ export class ModuleLoader {
  
                 await this.handleEvent(event)
             }
-        })()
+        })();
     }
 
     async scheduleEvent(event : EventType, files : string | Array<string>, callback : eventCallBack = () => {}) {
@@ -125,8 +129,10 @@ export class ModuleLoader {
 
                 for (const cls of moduleTree.class) {
                     const loadFunc = getFunctionFromCls(cls, "onLoad")
-                    loadFunc?.()
+                    loadFunc?.(this.globals)
                 }
+
+                await this.globals.callEvent(EventNames.onLoad, this.globals, file)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
@@ -153,8 +159,10 @@ export class ModuleLoader {
 
                     for (const cls of this.moduleCommandTree[file].class) {
                         const unLoadFunc = getFunctionFromCls(cls, "onUnload")
-                        unLoadFunc?.()
+                        unLoadFunc?.(this.globals)
                     }
+
+                    await this.globals.callEvent(EventNames.onUnload, this.globals, file)
 
                     this.commands = this.deleteModulesCommands(file)
                     delete this.moduleCommandTree[file]
@@ -178,8 +186,10 @@ export class ModuleLoader {
 
                 for (const cls of moduleTree.class) {
                     const loadFunc = getFunctionFromCls(cls, "onLoad")
-                    loadFunc?.()
+                    loadFunc?.(this.globals)
                 }
+
+                await this.globals.callEvent(EventNames.onLoad, this.globals, file)
 
                 await this.unloadModuleHandler([file], callbackError => {
                     errors.push(...callbackError)
