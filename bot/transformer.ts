@@ -7,6 +7,7 @@ export interface BaseTransformer<T> {
 
 export interface stringTransformer { 
     restOfString : boolean
+    lowerCase    : boolean
     quotedString : boolean
 }
 
@@ -16,7 +17,7 @@ export class StringTransformer implements BaseTransformer<string>, Complete<stri
     quotedString : boolean
     lowerCase    : boolean
 
-    constructor(restOfString : boolean = false, quotedString = true, lowerCase = false) {
+    constructor(restOfString : boolean = false, lowerCase = false, quotedString = true,) {
         this.restOfString = restOfString
         this.quotedString = quotedString
         this.lowerCase = lowerCase
@@ -28,7 +29,7 @@ export class StringTransformer implements BaseTransformer<string>, Complete<stri
         if (this.restOfString) {
             arg = stringParser.getRestOfString();
         } else {
-            arg = stringParser.getArg();
+            arg = stringParser.getArg(this.quotedString);
         }
 
         if (this.lowerCase) 
