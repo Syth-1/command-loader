@@ -14,10 +14,12 @@ export class StringTransformer implements BaseTransformer<string>, Complete<stri
 
     restOfString : boolean
     quotedString : boolean
+    lowerCase    : boolean
 
-    constructor(restOfString : boolean = false, quotedString = true) {
+    constructor(restOfString : boolean = false, quotedString = true, lowerCase = false) {
         this.restOfString = restOfString
         this.quotedString = quotedString
+        this.lowerCase = lowerCase
     }
 
     handleConstraint(ctx : Context, stringParser : StringParser) { 
@@ -28,6 +30,9 @@ export class StringTransformer implements BaseTransformer<string>, Complete<stri
         } else {
             arg = stringParser.getArg();
         }
+
+        if (this.lowerCase) 
+            arg = arg.toLowerCase()
 
         return arg; 
     }
