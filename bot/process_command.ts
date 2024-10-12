@@ -149,6 +149,8 @@ export class ProcessCommands<
             }
 
             this.callEvent(EventNames.error, e, ctx)
+
+            return false
         }
     }
 
@@ -162,13 +164,21 @@ export class ProcessCommands<
                     const value = await func(...args)
     
                     if (value !== undefined) return value // assume if a value is returned, we early return!
-                } catch { 
+                } catch (e) { 
                     if (event === EventNames.error) continue
     
-                    await this.callEvent(
-                        EventNames.error, 
+                    // check if a custom error message is thrown, else provide a diagnostic error
+                    let error = (e instanceof Error && Object.getPrototypeOf(e) !== Error ? 
+                        e : 
                         Error(`calling function: '${func.name}' for event '${event}' failed! args passed: ${args}`)
                     )
+
+                    await this.callEvent(
+                        EventNames.error, 
+                        error
+                    )
+
+                    return false // if an error occurs, we hault execution flow
                 }
             }
         }
