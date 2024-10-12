@@ -113,6 +113,8 @@ export class ModuleLoader {
 
     purgeImportCache() { 
         for (const file of Object.keys(require.cache)) {
+            if (checkSkipImport(file)) continue
+        
             delete require.cache[file]
         }
     }
@@ -428,12 +430,6 @@ function checkSkipImport(filePath: string) {
     }
 
     return false;
-}
-
-for (const file of Object.keys(require.cache)) {
-    if (checkSkipImport(file)) continue
-
-    delete require.cache[file]
 }
 
 // https://stackoverflow.com/a/43197340
