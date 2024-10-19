@@ -1,4 +1,4 @@
-// this file is a refrence for the data structure for modules:
+// this file is a refrence for the data structure used for modules:
 
 modulesBuffer = {
     someClass : {
