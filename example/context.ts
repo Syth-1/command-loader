@@ -11,7 +11,9 @@ export async function getModuleFiles() {
 
 export class Context extends BaseContext {
 
-    constructor() {
-        super()
+    // can have your own functions 
+    // example for sendMessage to send a message back
+    sendMessage(input : string) { 
+        console.log(input)
     }
 }
