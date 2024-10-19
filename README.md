@@ -31,6 +31,7 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 
 ## Usage/Examples
 
+main script:
 ```typescript
 import { CommandProcessor, BaseGlobals, BaseContext } from '@/command-loader/bot/process_command'
 import { readdir } from 'node:fs/promises'
@@ -71,4 +72,28 @@ async function main() {
 }
 
 main()
+```
+
+within `modules/script_module.ts`:
+```typescript
+import { Commands, Listener } from "@/bot/commands"
+import { type BaseContext as Context } from '@/command-loader/bot/process_command'
+
+export class Module {
+
+    @Commands.command()
+    async hello(ctx : Context) {
+        console.log("hello world")
+    }
+
+    @Commands.command()
+    async add(ctx : Context, num1 : number, num2 : number) { 
+        console.log(num1 + num2)
+    }
+
+    @Listener.error
+    async globalError(err : Error, ctx? : Context) { 
+        console.log("an error occured!", err.message)
+    }
+}
 ```
