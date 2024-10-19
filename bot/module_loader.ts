@@ -51,6 +51,8 @@ export class ModuleLoader {
     private events = new Queue<Event>()
     private readonly globals : BaseGlobals
 
+    readonly cacheFlag = "useCache"
+
     constructor(globals : BaseGlobals) {
         
         this.globals = globals;
@@ -79,7 +81,7 @@ export class ModuleLoader {
 
     private async loadFile(file : string) {
 
-        const importedCls : Array<typedCls> = await import(file + '?q=' + Math.random()) // dirty load
+        const importedCls : Array<typedCls> = await import(file)
 
         console.log(importedCls)
 
@@ -112,8 +114,8 @@ export class ModuleLoader {
     }
 
     purgeImportCache() { 
-        for (const file of Object.keys(require.cache)) {
-            if (checkSkipImport(file)) continue
+        for (const [file, module] of Object.entries(require.cache)) {
+            if (checkSkipImport(file) || (module !== undefined && module.exports[this.cacheFlag] === true)) continue
         
             delete require.cache[file]
         }
