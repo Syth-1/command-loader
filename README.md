@@ -40,8 +40,9 @@ import path from 'path'
 export const moduleFolder = "modules"
 
 async function getModuleFiles(folder : string) {
-    return await readdir(`./${folder}`))
+    return (await readdir(`./${folder}`))
         .map(file => import.meta.resolve(`@/${path.join(folder, file)}`)
+    )
 }
 
 async function main() {
