@@ -1,29 +1,74 @@
 # command-loader
 
-To install dependencies:
+Command-Loader is an agnostic bot library, designed to make creating text bots easier, be it for games or other services. Command-Loader will automatically handle the number of arguments required by your commands and convert them to the necessary types.
 
+
+## Installation
+
+> [!NOTE]
+> For ideal installation in your project, it is recommended to use submodules.
+
+- Installing a new submodule: 
 ```bash
-bun install
+    git submodule add <url>
+    git submodule update --init
+
+    # updating existing submodules to newest commit:
+    git submodule update --remote --merge
 ```
-
-To run:
-
-```bash
-bun run app.ts
+- Installing dependencies & running the example:
 ```
-
-This project was created using `bun init` in bun v1.1.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
-
-# Example usage
-
-To invoke a command:
-
+    cd command-loader
+    bun update
+    bun run example/app.ts
 ```
-/hello
-```
+## Features
 
-To relaod: 
+- Auto args handling
+- Reloading
+- Subcommands
 
-```
-/reload
+
+## Usage/Examples
+
+```typescript
+import { CommandProcessor, BaseGlobals, BaseContext } from '@/command-loader/bot/process_command'
+import { readdir } from 'node:fs/promises'
+import path from 'path'
+
+export const moduleFolder = "modules"
+
+async function getModuleFiles(folder : string) {
+    return (await readdir(`./${folder}`))
+        .map(file => import.meta.resolve(`@/${path.join(folder, file)}`))
+}
+
+async function main() {
+    const globals = new BaseGlobals(
+        "test-bot", // name of bot
+        "/",        // prefix
+    )
+
+    const commandProcessor = new CommandProcessor(
+        BaseContext,
+        globals
+    )
+
+    await commandProcessor.moduleLoader.scheduleEvent(
+        "load", 
+        await getModuleFiles(moduleFolder), 
+        error => {
+            if (error.length > 0)
+                console.log(error)
+            else
+                console.log("loaded files!")
+        }
+    )
+
+    for await (const line of console)
+        commandProcessor.processCommands(line)
+
+}
+
+main()
 ```
