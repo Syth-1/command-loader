@@ -37,7 +37,7 @@ import { CommandProcessor, BaseGlobals, BaseContext } from '@/command-loader/bot
 import { readdir } from 'node:fs/promises'
 import path from 'path'
 
-export const moduleFolder = "modules"
+const moduleFolder = "modules"
 
 async function getModuleFiles(folder : string) {
     return (await readdir(`./${folder}`))
