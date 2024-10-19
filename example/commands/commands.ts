@@ -2,6 +2,7 @@
 import { Commands, Listener } from "@/bot/commands"
 import { type Context } from "@/context"
 import { value } from "../script"
+import { StringTransformer } from "@/bot/transformer"
 
 // dont forget to export a modules class, else it wont be loaded!
 export class TestCommands{
@@ -18,6 +19,7 @@ export class TestCommands{
     // if name is not provided, it will use the functions name!
     // all commands are checked if they already exists, so ensure to use a unique name!
 
+    // first argument of the function will always be Context!
     @Commands.command({alias : ["hello", "world"]})
     test(ctx : Context)  {
         ctx.sendMessage("hello world")
@@ -28,6 +30,21 @@ export class TestCommands{
     test2(ctx : Context, number : number) {
         console.log("^^")
         console.log(number)
+    }
+
+    // using custom input transformers,
+    // after the first arg in `@Command.command`, pass a transformer
+    // to change how processing the arguments work
+    // can even use a custom transformer for a custom data type
+    // pass null or undefined to keep default behaviour for that argument
+    @Commands.command('copy', new StringTransformer(true))
+    copy(ctx : Context, input : string) { 
+        ctx.sendMessage(input)
+    }
+
+    @Commands.command('info', null, new StringTransformer(true))
+    info(ctx : Context, age : number, fullName : string) {
+        ctx.sendMessage(`hello ${fullName}, you are ${age} old`)
     }
 
     // listeners are global! they are run when ever this event is fired from anywhere in the bot
