@@ -42,7 +42,6 @@ declare global {
     interface Globals {
         botName: string;
         prefix : string;
-        moduleFolder : string;
         moduleLoader : ModuleLoader
         callEvent : (...args: any[]) => any
     } 
