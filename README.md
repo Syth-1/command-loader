@@ -33,7 +33,7 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 
 main script:
 ```typescript
-import { CommandProcessor, BaseGlobals, BaseContext } from '@/command-loader/bot/process_command'
+import { CommandProcessor, BaseGlobals, BaseContext } from './command-loader/bot/process_command'
 import { readdir } from 'node:fs/promises'
 import path from 'path'
 
@@ -77,8 +77,8 @@ main()
 
 within `modules/script_module.ts`:
 ```typescript
-import { Commands, Listener } from "@/bot/commands"
-import { type BaseContext as Context } from '@/command-loader/bot/process_command'
+import { Commands, Listener } from "../command-loader/bot/commands"
+import { type BaseContext as Context } from '../command-loader/bot/process_command'
 
 export class Module {
 
