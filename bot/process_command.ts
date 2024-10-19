@@ -2,7 +2,7 @@ import { EventNames, ModuleLoader, StringParser, getFunctionFromCls } from "./in
 
 type typedCls<T> = new (...args : any) => T
 
-export class ProcessCommands<
+export class CommandProcessor<
     T extends new (...args : any) => BaseContext, 
     U extends BaseGlobals
 >
@@ -207,11 +207,10 @@ export class BaseContext implements Context {
 
 export class BaseGlobals implements Globals {
     moduleLoader! : ModuleLoader
-    callEvent! : typeof ProcessCommands.prototype.callEvent
+    callEvent! : typeof CommandProcessor.prototype.callEvent
 
     constructor(
         public botName : string,
         public prefix : string,
-        public moduleFolder : string
     ) { }
 }
