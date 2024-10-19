@@ -1,0 +1,68 @@
+// this file is a refrence for the data structure for modules:
+
+modulesBuffer = {
+    someClass : {
+        "command 1" : someFunc1,
+        "command 2" : someFunc2,
+        "command 3" : someFunc3,
+    }
+}
+
+modules = {
+    "module 1": {
+        class: [SomeClass], // array of classes stored here to call onLoad and unLoad
+        commands: [
+            "command 1",
+            "command 2",
+            "command 3",
+
+            // begin subcommand 
+            {
+                "prefix": "some string",
+                "onCommandNotFound" : true,
+                "onDefaultCommand" : false,
+                "commands": [
+                    "command 1",
+                    "command 2",
+                    "command 3"
+                ]
+            }
+            // end subcomamand
+        ]
+    },
+
+    "module with parent command": {
+        class: [SomeClass],
+        commands: [
+            
+            // begin subcommand 
+            {
+                "prefix": "some string",
+                "onCommandNotFound" : false,
+                "onDefaultCommand" : true,
+                "commands": [
+                    "command 1",
+                    "command 2",
+                    "command 3"
+                ]
+            }
+            // end subcomamand
+        ]
+    }
+}
+
+commands = { // commands collection
+    "command 1": { cls, SomeFunc }, // commands
+    "command 2": { cls, SomeOtherFunc },
+    "command 3": { cls, AnotherFunc },
+
+    "some command prefix": { // NestedCommandObj
+        "onCommandNotFound" : SomeErrorHandlingFunc,
+        "onDefaultCommand" : SomeDefaultCommand,
+        "commands" : { // commands collection
+            "command 1": { cls, SomeFunctionWithPrefix },
+            "command 2": { cls, SomeOtherFuncWithPrefix },
+            "command 3": { cls, AnotherFuncWithPrefix }
+        }
+    }
+}
