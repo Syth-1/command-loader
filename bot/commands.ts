@@ -15,7 +15,9 @@ import {
     EventNames,
 
     type BaseTransformer,
-    type parent
+    type parent,
+    BaseGlobals,
+    BaseContext
 } from "./internals";
 
 
@@ -136,6 +138,12 @@ export class Listener {
     }
 }
 
+export interface Module {
+    onLoad?(globals : BaseGlobals) : Promise<void>
+    onUnload?(globals : BaseGlobals) : Promise<void>
+    onError?(error : Error, ctx? : BaseContext) : Promise<void>
+    onCommand?(ctx : BaseContext) : Promise<void | string | boolean>
+}
 
 function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
 
@@ -178,7 +186,7 @@ function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectType
 
 function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflectTypes, constraint : BaseTransformer<any> | null | undefined, index : number) { 
     
-    if (constraint !== null && typeof constraint == 'object') {
+    if (constraint !== null && typeof constraint === 'object' && constraint['handleConstraint'] !== undefined) {
         return constraint.handleConstraint(ctx, stringParser)
     }
 
