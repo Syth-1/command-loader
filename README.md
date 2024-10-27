@@ -1,6 +1,6 @@
 # command-loader
 
-Command-Loader is an agnostic bot library, designed to make creating text bots easier, be it for games or other services. Command-Loader will automatically handle the number of arguments required by your commands and convert them to the necessary types.
+Command-Loader is an agnostic bot library, designed to make creating text bots easier, be it for games or other services. Command-Loader will automatically handle the number of arguments required by your commands and convert the input to the necessary types.
 
 
 ## Installation
