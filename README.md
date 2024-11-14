@@ -31,7 +31,7 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 
 ## Usage/Examples
 
-ensure the following is added to `tsconfig.json`:
+Ensure the following is added to `tsconfig.json`:
 ```json
 "experimentalDecorators":  true,
 "emitDecoratorMetadata": true,
