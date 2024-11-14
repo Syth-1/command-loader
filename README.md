@@ -31,6 +31,12 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 
 ## Usage/Examples
 
+ensure the following is added to `tsconfig.json`:
+```json
+    "experimentalDecorators":  true,
+    "emitDecoratorMetadata": true,
+```
+
 main script:
 ```typescript
 import { CommandProcessor, BaseGlobals, BaseContext } from './command-loader/bot/process_command'
@@ -41,7 +47,7 @@ const moduleFolder = "modules"
 
 async function getModuleFiles(folder : string) {
     return (await readdir(`./${folder}`))
-        .map(file => import.meta.resolve(`@/${path.join(folder, file)}`)
+        .map(file => import.meta.resolve(`./${path.join(folder, file)}`)
     )
 }
 
