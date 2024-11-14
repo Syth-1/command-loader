@@ -47,7 +47,7 @@ async function getModuleFiles(folder : string) {
 
 async function main() {
     const globals = new BaseGlobals(
-        "/",        // prefix
+        "/", // prefix
     )
 
     const commandProcessor = new CommandProcessor(
