@@ -3,7 +3,6 @@ import { Context, getModuleFiles, moduleFolder } from './context'
 
 async function main() {
     const globals = new BaseGlobals(
-        "Bot", // the name of the bot
         "/", // the prefix to call a command!
 
         // add any other variables you would like to have access across the entire bot,

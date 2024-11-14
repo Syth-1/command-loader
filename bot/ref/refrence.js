@@ -21,6 +21,7 @@ modules = {
                 "prefix": "some string",
                 "onCommandNotFound" : true,
                 "onDefaultCommand" : false,
+                "check" : [],
                 "commands": [
                     "command 1",
                     "command 2",
@@ -40,6 +41,7 @@ modules = {
                 "prefix": "some string",
                 "onCommandNotFound" : false,
                 "onDefaultCommand" : true,
+                "check" : [ "CheckName" ],
                 "commands": [
                     "command 1",
                     "command 2",
@@ -59,6 +61,9 @@ commands = { // commands collection
     "some command prefix": { // NestedCommandObj
         "onCommandNotFound" : SomeErrorHandlingFunc,
         "onDefaultCommand" : SomeDefaultCommand,
+        "check" : {
+            "CheckName" : FunctionToCall // when removing, can just remove from here
+        },
         "commands" : { // commands collection
             "command 1": { cls, SomeFunctionWithPrefix },
             "command 2": { cls, SomeOtherFuncWithPrefix },

@@ -41,7 +41,7 @@ export class CommandProcessor<
         }
 
         if (!msg.startsWith(this.globals.prefix)) return;
-        
+
         const preCheck = await this.callEvent(EventNames.preCheck, context, msg)
 
         if (typeof preCheck === 'boolean') {
@@ -210,7 +210,6 @@ export class BaseGlobals implements Globals {
     callEvent! : typeof CommandProcessor.prototype.callEvent
 
     constructor(
-        public botName : string,
         public prefix : string,
     ) { }
 }

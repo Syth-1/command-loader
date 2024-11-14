@@ -23,6 +23,9 @@ declare global {
             cls : Class, 
             command : (ctx : Context) => any
         },
+        check : {
+            [key: string] : (ctx : Context) => any
+        }
         commands : CommandsCollection
     }
 
@@ -40,7 +43,6 @@ declare global {
     }
 
     interface Globals {
-        botName: string;
         prefix : string;
         moduleLoader : ModuleLoader
         callEvent : (...args: any[]) => any

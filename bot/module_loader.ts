@@ -8,12 +8,12 @@ interface ModuleCommandsObj {
     [key: string] : ModuleCommands
 }
 
-interface baseCommands { 
+interface BaseCommands { 
     commands : Array<string>
     subcommands : SubCommandObj
 }
 
-interface ModuleCommands extends baseCommands {
+interface ModuleCommands extends BaseCommands {
     class : Array<Class>
 }
 
@@ -23,7 +23,13 @@ type PartialCommands = {
     command : Function
 }
 
-type SubCommand = Converter<MergeTwo<baseCommands, NestedCommandObj>, PartialCommands | undefined, boolean> 
+type CheckCommandsObj = {
+    [key: string]: (ctx: Context) => any;
+}
+
+type SubCommand = Converter<Converter<MergeTwo<BaseCommands, NestedCommandObj>, PartialCommands | undefined, boolean>, 
+    CheckCommandsObj, Array<string>
+>
 
 interface SubCommandObj {
     [key: string] : SubCommand
@@ -247,7 +253,8 @@ export class ModuleLoader {
                 commands : [],
                 onDefaultCommand : false,
                 onCommandNotFound : false,
-                subcommands : {}
+                subcommands : {},
+                check : []
             } 
         }
 
@@ -255,7 +262,8 @@ export class ModuleLoader {
             nestedCommandObj[child] = {
                 commands : {},
                 onDefaultCommand : undefined,
-                onCommandNotFound : undefined, 
+                onCommandNotFound : undefined,
+                check : {}
             }
         } else {
             if (nestedCommandObj[child].hasOwnProperty("cls")) {
