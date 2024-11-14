@@ -19,7 +19,7 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 - Installing dependencies & running the example:
 ```
     cd command-loader
-    bun update
+    bun install
     bun run example/app.ts
 ```
 ## Features
