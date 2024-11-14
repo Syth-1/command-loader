@@ -47,7 +47,6 @@ async function getModuleFiles(folder : string) {
 
 async function main() {
     const globals = new BaseGlobals(
-        "test-bot", // name of bot
         "/",        // prefix
     )
 
