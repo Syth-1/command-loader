@@ -1,21 +1,30 @@
 // we first store the commands into a commands buffer incase there's an error when loading the file,
 // we can simply clear the buffer without making changes to the actual commands list. 
 
-export class CommandsBuffer { 
-    
-    static clearCache(cls : typedCls) { 
-        delete cls.prototype[commandBufferVarName]
-        delete cls.prototype[eventBufferVarName]
-    }
+interface BufferClass { 
+    /** ⚠️**CAUTION**⚠️ - *Typescript does not enforce* `readonly` */
+    readonly varName : string
+    add : Function, 
+    read : Function,
+    delete : Function
+}
 
-    static addCommandBuffer(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
+type commands = CommandMap | undefined
+type events = ModuleEvent | undefined
 
-        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${func.name} - existing func: ${cls[commandBufferVarName]?.[name].name} in class : ${cls.name})`) 
 
-        if (cls[commandBufferVarName] === undefined)
-            cls[commandBufferVarName] = {}
+class CommandBuffer implements BufferClass { 
+    readonly varName = '__commandBuffer__'
 
-        let commandsObj : CommandMap = cls[commandBufferVarName]
+    add(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
+
+        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${func.name} - existing func: ${cls[this.varName]?.[name].name} in class : ${cls.name})`) 
+
+
+        if (cls[this.varName] === undefined)
+            cls[this.varName] = {}
+
+        const commandsObj : CommandMap = cls[this.varName]!
 
         commandName.forEach((name) => {
             name = name.toLowerCase();
@@ -26,41 +35,91 @@ export class CommandsBuffer {
             commandsObj[name] = func
         })
     }
+    
 
-    static addEvent(cls : typedCls, eventName : string, func : Function) {
-        if (cls[eventBufferVarName] == undefined)
-            cls[eventBufferVarName] = {}
+    read(cls : typedCls) {
+        return cls.prototype[this.varName] as commands
+    }
 
-        const events = cls[eventBufferVarName]
+    delete(cls : typedCls) { 
+        delete cls.prototype[this.varName]
+    }
+}
+
+
+class EventBuffer implements BufferClass { 
+    readonly varName = "__eventBuffer__"
+
+    add(cls : typedCls, eventName : string, func : Function) {
+
+        if (cls[this.varName] === undefined)
+            cls[this.varName] = {}
+
+        const events = cls[this.varName]!
 
         if (!events.hasOwnProperty(eventName)) events[eventName] = []
         events[eventName].push(func)
     }
 
-    static readCommandBuffer(cls : typedCls) {
-        return cls.prototype[commandBufferVarName] as commands
+    read(cls : typedCls) { 
+        return cls.prototype[this.varName] as events
     }
-
-    static readEventBuffer(cls : typedCls) { 
-        return cls.prototype[eventBufferVarName] as events
+    
+    delete(cls : typedCls) {
+        delete cls.prototype[this.varName]
     }
 }
 
-type commands = CommandMap | undefined
-type events = ModuleEvent | undefined
+
+class CheckBuffer implements BufferClass {
+    readonly varName = "__checkBuffer__"
+
+    add(cls : typedCls, func : Function) { 
+
+        if (cls[this.varName] === undefined)
+            cls[this.varName] = []
+
+        cls[this.varName].push(func as CommandFunction)
+    }
+    
+    read(cls : typedCls) { 
+        return cls.prototype[this.varName] as Array<CommandFunction>
+    }
+
+    delete(cls : typedCls) {
+        delete cls.prototype[this.varName]
+    }
+}
+
+
+export const buffers = classToInstancedDict({
+    CommandBuffer,
+    CheckBuffer,
+    EventBuffer
+})
 
 export type typedCls = Class & { 
-    [commandBufferVarName] : commands,
-    [eventBufferVarName] : events
+    [ K in keyof typeof buffers as typeof buffers[K]['varName'] ] : ReturnType<typeof buffers[K]['read']>
 }
-
-export const commandBufferVarName = '__commandBuffer__'
-
-export const eventBufferVarName = '__eventBuffer__'
-
+        
 export const parentVarName = '__parent__'
 
 export interface parent {
     name? : string, 
     parent? : string | Array<string>
+}
+
+export function clearCache(cls : typedCls) { 
+    for (const bufferCls of Object.values(buffers))
+        bufferCls.delete(cls)
+}
+
+function classToInstancedDict<T extends Record<string, Class>>(classes: T): { [K in keyof T]: InstanceType<T[K]> } {
+    const result = {} as { [K in keyof T]: InstanceType<T[K]> };
+  
+    for (const key in classes) {
+        result[key] = new classes[key]();
+    }
+  
+    return result;
 }

@@ -1,5 +1,5 @@
 import { cloneDeepWith } from 'lodash'
-import { CommandsBuffer, parentVarName, type typedCls, type BaseGlobals } from './internals'
+import { buffers, clearCache, parentVarName, type typedCls, type BaseGlobals } from './internals'
 import Queue from './utils/queue'
 import path from 'node:path'
 import { EventNames } from './internals'
@@ -97,7 +97,7 @@ export class ModuleLoader {
         for (const [moduleName, cls] of Object.entries(importedCls)) {
             if (!isClass(cls)) continue
 
-            const events = CommandsBuffer.readEventBuffer(cls)
+            const events = buffers.EventBuffer.read(cls)
 
             if (events !== undefined) {
                 for (const [name, funcArr] of Object.entries(events)) {
@@ -107,12 +107,12 @@ export class ModuleLoader {
                 }
             }
 
-            const commandsMap = CommandsBuffer.readCommandBuffer(cls)
+            const commandsMap = buffers.CommandBuffer.read(cls)
 
             if (commandsMap !== undefined)
                 commandsBufferMap.set(cls, commandsMap)
         
-            CommandsBuffer.clearCache(cls)
+            clearCache(cls)
         }
 
         // throws error if check failed.
@@ -367,6 +367,10 @@ export class ModuleLoader {
 
         for (const commands of subcommand.commands) {
             delete copyCommands.commands[commands]
+        }
+
+        for (const check of subcommand.check) { 
+            delete copyCommands.check[check]
         }
 
         this.deleteSubCommandObj(subcommand.subcommands, copyCommands)

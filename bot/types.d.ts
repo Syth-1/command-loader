@@ -31,7 +31,7 @@ declare global {
 
     type CommandBufferMap = Map<Class, CommandMap>
 
-    type Class = { new(...args: any[]): any; };
+    type Class = { new(...args: any[]): any; name : string};
 
     interface Context { 
         msg : string

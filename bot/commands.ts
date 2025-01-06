@@ -1,8 +1,7 @@
 import 'reflect-metadata'
 import { isArray } from "lodash";
 import { 
-    CommandsBuffer, 
-    Transformer,
+    buffers, 
     StringParser,
     CommandError,
 
@@ -11,7 +10,6 @@ import {
     standardBooleanTransformer,
 
     parentVarName,
-    commandBufferVarName,
     EventNames,
 
     type BaseTransformer,
@@ -76,7 +74,7 @@ export class Commands {
 
             const parent : string | undefined = Object.getOwnPropertyDescriptor(methodClass, parentVarName)?.value
 
-            CommandsBuffer.addCommandBuffer([commandName, ...alias], methodClass, descriptor.value)
+            buffers.CommandBuffer.add([commandName, ...alias], methodClass, descriptor.value)
         }
     }
 
@@ -112,28 +110,32 @@ export class Commands {
             return targetClass
         }
     }
+
+    static check(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        
+    }
 }
 
 export class Listener {
     static message(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(methodClass, EventNames.onMessage, descriptor.value)
+        buffers.EventBuffer.add(methodClass, EventNames.onMessage, descriptor.value)
     }
 
     static command(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(methodClass, EventNames.onCommand, descriptor.value)
+        buffers.EventBuffer.add(methodClass, EventNames.onCommand, descriptor.value)
     }
     
     static precheck(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(methodClass, EventNames.preCheck, descriptor.value)
+        buffers.EventBuffer.add(methodClass, EventNames.preCheck, descriptor.value)
     }
 
     static error(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        CommandsBuffer.addEvent(methodClass, EventNames.error, descriptor.value)
+        buffers.EventBuffer.add(methodClass, EventNames.error, descriptor.value)
     }
 
     static custom(eventName? : string) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
-            CommandsBuffer.addEvent(methodClass, eventName || methodName, descriptor.value)
+            buffers.EventBuffer.add(methodClass, eventName || methodName, descriptor.value)
         }
     }
 }
