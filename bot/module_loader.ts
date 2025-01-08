@@ -111,8 +111,8 @@ export class ModuleLoader {
             const checkMap = buffers.CheckBuffer.read(cls) || []
 
             if (!(Object.entries(commandsMap).length === 0 &&
-                Object.entries(checkMap).length === 0
-            )) { // so we dont process empty objects
+                checkMap.length === 0
+            )) { // so we dont process empty objects, if it only loaded events
                 commandsBufferMap.set(cls, {
                     commands : commandsMap,
                     check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
