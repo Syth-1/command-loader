@@ -56,7 +56,7 @@ export class CommandProcessor<
 
         let commandParser = new StringParser(msg, false)
 
-        const command = commandParser.getArg().toLocaleLowerCase()
+        const command = commandParser.getArg().toLowerCase()
 
         if (command.length === 0) return;
 
@@ -64,7 +64,7 @@ export class CommandProcessor<
         
         if (funcOrParent === undefined) return
         
-        let func = this.tryGetSubCommand(funcOrParent, commandParser, context)
+        let func = await this.tryGetSubCommand(funcOrParent, commandParser, context)
         
         if (func === undefined) return; 
 
@@ -94,13 +94,20 @@ export class CommandProcessor<
     }
 
     
-    private tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context) {
+    private async tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context) {
         
         while (true) {
             if (typeof commandObj === 'object' && !commandObj.hasOwnProperty("cls")) {
-                
+
+                if (commandObj.hasOwnProperty("check")) {
+                    const typedCommandObj = commandObj as NestedCommandObj
+
+                    for (const checkFunc of Object.values(typedCommandObj.check))
+                        if (await this.tryExecuteCommand(checkFunc.cls, checkFunc.command, ctx) === false) return
+                }
+
                 let nestedCommandObj = commandObj as NestedCommandObj
-                const subcommand = commandParser.getArg().toLocaleLowerCase()
+                const subcommand = commandParser.getArg().toLowerCase()
                 
                 if (subcommand.length === 0) {
                     if (nestedCommandObj.onDefaultCommand != undefined) {

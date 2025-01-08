@@ -138,3 +138,30 @@ export class NestedCommands {
         console.log("bar")
     }
 }
+
+@Commands.parent(["a", "b", "c"])
+export class CheckTest { 
+
+    // should not work, as /a b limits this access
+    @Commands.command()
+    async test(ctx : Context) { 
+        console.log("test complete")
+    }
+
+}
+
+@Commands.parent(["a"])
+export class WorkingTest {
+    @Commands.command()
+    async test(ctx : Context) { 
+        console.log("test complete")
+    }
+}
+
+@Commands.parent(["a", "b"])
+export class LimiterTest {
+    @Commands.check
+    async check(ctx : Context) { 
+        return false
+    }
+}

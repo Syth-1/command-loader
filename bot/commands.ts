@@ -112,7 +112,7 @@ export class Commands {
     }
 
     static check(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        
+        buffers.CheckBuffer.add(methodClass, descriptor.value)
     }
 }
 

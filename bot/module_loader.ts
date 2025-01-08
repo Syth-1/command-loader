@@ -24,7 +24,7 @@ type PartialCommands = {
 }
 
 type CheckCommandsObj = {
-    [key: string]: (ctx: Context) => any;
+    [key: string]: PartialCommands
 }
 
 type SubCommand = Converter<Converter<MergeTwo<BaseCommands, NestedCommandObj>, PartialCommands | undefined, boolean>, 
@@ -91,7 +91,7 @@ export class ModuleLoader {
 
         console.log(importedCls)
 
-        const commandsBufferMap : CommandBufferMap = new Map<Class, CommandMap>()
+        const commandsBufferMap : CommandBufferMap = new Map()
         const listenerEvents : ModuleEvent = {}
 
         for (const [moduleName, cls] of Object.entries(importedCls)) {
@@ -107,10 +107,17 @@ export class ModuleLoader {
                 }
             }
 
-            const commandsMap = buffers.CommandBuffer.read(cls)
+            const commandsMap = buffers.CommandBuffer.read(cls) || {}
+            const checkMap = buffers.CheckBuffer.read(cls) || []
 
-            if (commandsMap !== undefined)
-                commandsBufferMap.set(cls, commandsMap)
+            if (!(Object.entries(commandsMap).length === 0 &&
+                Object.entries(checkMap).length === 0
+            )) { // so we dont process empty objects
+                commandsBufferMap.set(cls, {
+                    commands : commandsMap,
+                    check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
+                })
+            }
         
             clearCache(cls)
         }
@@ -237,13 +244,13 @@ export class ModuleLoader {
                 continue
             }
 
-            this.addCommands(commandsToAdd, copyCommands, moduleTree.commands, cls)
+            this.addCommands(commandsToAdd.commands, copyCommands, moduleTree.commands, cls)
        }
 
         return {copyCommands, moduleTree}
     }
 
-    private addChildCommands(parent : NonEmptyArray<string>, commandsToAdd : CommandMap, cls : Class, commands : SubCommandObj, nestedCommandObj : CommandsCollection) {
+    private addChildCommands(parent : NonEmptyArray<string>, commandsToAdd : CommandBufferObj, cls : Class, commands : SubCommandObj, nestedCommandObj : CommandsCollection) : undefined {
         // returns commands tree + commandsObj
 
         const child = parent.shift()!
@@ -267,23 +274,21 @@ export class ModuleLoader {
             }
         } else {
             if (nestedCommandObj[child].hasOwnProperty("cls")) {
-                throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${((nestedCommandObj[child] as Commands).command as () => void).name}'`)
+                throw Error(`error occured while adding parent '${child}' - this already exsists as a function! : '${((nestedCommandObj[child] as Commands).command as Function).name}'`)
             }
         }
-    
+
         const childObj = commands[child]
         const commandObj = (nestedCommandObj[child] as NestedCommandObj)
 
         if (parent.length != 0) { 
             // if parent recursively add
 
-            this.addChildCommands(parent, commandsToAdd, cls, childObj.subcommands, commandObj.commands)
+            return this.addChildCommands(parent, commandsToAdd, cls, childObj.subcommands, commandObj.commands)
             // we use refs to add to the object.
-
-            return { childObj, commandObj }
         }
 
-        this.addCommands(commandsToAdd, commandObj.commands, childObj.commands, cls)
+        this.addCommands(commandsToAdd.commands, commandObj.commands, childObj.commands, cls)
         // we use refs to add to the object.
 
         type booleanKeysOfSubcommand = KeysOfType<SubCommand, boolean>
@@ -305,6 +310,18 @@ export class ModuleLoader {
             commandObj[typedKey] = {
                 cls : cls,
                 command : func
+            }
+        }
+
+        // add checks
+        for (const [key, val] of Object.entries(commandsToAdd.check)) {
+            if (key in childObj.check)
+                throw Error(`check '${key}' already exists!`)
+
+            childObj.check.push(key)
+            commandObj.check[key] = {
+                cls: cls, 
+                command : val
             }
         }
     }

@@ -101,7 +101,7 @@ export const buffers = classToInstancedDict({
 export type typedCls = Class & { 
     [ K in keyof typeof buffers as typeof buffers[K]['varName'] ] : ReturnType<typeof buffers[K]['read']>
 }
-        
+
 export const parentVarName = '__parent__'
 
 export interface parent {

@@ -24,12 +24,20 @@ declare global {
             command : (ctx : Context) => any
         },
         check : {
-            [key: string] : (ctx : Context) => any
+            [key: string] : {
+                cls : Class,
+                command : CommandFunction
+            }
         }
         commands : CommandsCollection
     }
 
-    type CommandBufferMap = Map<Class, CommandMap>
+    type CommandBufferMap = Map<Class, CommandBufferObj>
+
+    type CommandBufferObj = {
+        commands : CommandMap,
+        check : CommandMap
+    }
 
     type Class = { new(...args: any[]): any; name : string};
 
