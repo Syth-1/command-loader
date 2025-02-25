@@ -47,6 +47,11 @@ export class TestCommands{
         ctx.sendMessage(`hello ${fullName}, you are ${age} old`)
     }
 
+    @Commands.command({alias : ['ctxInfo']})
+    ctx(ctx : Context) { 
+        console.log(ctx)
+    }
+
     // listeners are global! they are run when ever this event is fired from anywhere in the bot
 
     // precheck is called when we know an input starts with the prefix,
@@ -62,6 +67,11 @@ export class TestCommands{
     @Listener.command
     async command() { 
         console.log("on command!")
+    }
+
+    @Listener.execute
+    async execute() { 
+        console.log("parsing finished successfully!")
     }
 
     // global error event!

@@ -149,7 +149,7 @@ export class ModuleLoader {
                     loadFunc?.(this.globals)
                 }
 
-                await this.globals.callEvent(EventNames.onLoad, this.globals, file)
+                await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
@@ -179,7 +179,7 @@ export class ModuleLoader {
                         unLoadFunc?.(this.globals)
                     }
 
-                    await this.globals.callEvent(EventNames.onUnload, this.globals, file)
+                    await this.globals.commandProcessor.callEvent(EventNames.onUnload, this.globals, file)
 
                     this.commands = this.deleteModulesCommands(file)
                     delete this.moduleCommandTree[file]
@@ -206,7 +206,7 @@ export class ModuleLoader {
                     loadFunc?.(this.globals)
                 }
 
-                await this.globals.callEvent(EventNames.onLoad, this.globals, file)
+                await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
 
                 await this.unloadModuleHandler([file], callbackError => {
                     errors.push(...callbackError)

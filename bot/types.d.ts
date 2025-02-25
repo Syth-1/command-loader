@@ -1,4 +1,5 @@
 import type { ModuleLoader } from "./module_loader"
+import type { CommandProcessor } from "./process_command"
 
 declare global {
     type CommandMap = { [key: string] : CommandFunction }
@@ -44,16 +45,16 @@ declare global {
     interface Context { 
         msg : string
         content : string
-
+        commandName : string
         methodName : string
-        className  : string
+        class  : Class
         globals : Globals
     }
 
     interface Globals {
         prefix : string;
         moduleLoader : ModuleLoader
-        callEvent : (...args: any[]) => any
+        commandProcessor : CommandProcessor<any, any>
     } 
 
     interface ModuleEvent {

@@ -16,7 +16,7 @@ export class CommandProcessor<
         this.moduleLoader = new ModuleLoader(globals)
         this.contextCls = contextCls
         
-        globals.callEvent = this.callEvent
+        globals.commandProcessor = this
         globals.moduleLoader = this.moduleLoader
         
         this.globals = globals
@@ -63,8 +63,8 @@ export class CommandProcessor<
         let funcOrParent = this.moduleLoader.commands[command]
         
         if (funcOrParent === undefined) return
-        
-        let func = await this.tryGetSubCommand(funcOrParent, commandParser, context)
+
+        let func = await this.tryGetSubCommand(funcOrParent, commandParser, context, command)
         
         if (func === undefined) return; 
 
@@ -78,7 +78,7 @@ export class CommandProcessor<
             context.content = onCommandCheck
         }
 
-        const onLocalCommand = getFunctionFromCls(func.cls, "onCommand")
+        const onLocalCommand = getFunctionFromCls(func.cls, EventNames.onCommand)
 
         if (onLocalCommand != undefined) {
             const onLocalCommndCheck = await this.tryExecuteCommand(func.cls, onLocalCommand, context)
@@ -94,8 +94,8 @@ export class CommandProcessor<
     }
 
     
-    private async tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context) {
-        
+    private async tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context, commandName : string) {
+        let lastCommandName = commandName
         while (true) {
             if (typeof commandObj === 'object' && !commandObj.hasOwnProperty("cls")) {
 
@@ -103,13 +103,13 @@ export class CommandProcessor<
                     const typedCommandObj = commandObj as NestedCommandObj
 
                     for (const checkFunc of Object.values(typedCommandObj.check))
-                        if (await this.tryExecuteCommand(checkFunc.cls, checkFunc.command, ctx) === false) return
+                        if ((await this.tryExecuteCommand(checkFunc.cls, checkFunc.command, ctx)) === false) return
                 }
 
                 let nestedCommandObj = commandObj as NestedCommandObj
-                const subcommand = commandParser.getArg().toLowerCase()
+                lastCommandName = commandParser.getArg().toLowerCase()
                 
-                if (subcommand.length === 0) {
+                if (lastCommandName.length === 0) {
                     if (nestedCommandObj.onDefaultCommand != undefined) {
                         return nestedCommandObj.onDefaultCommand as Commands // default command is just command function without any additional params.
                     }
@@ -117,7 +117,7 @@ export class CommandProcessor<
                 }
                 
                 // handle subcommand not found!
-                if (nestedCommandObj.commands[subcommand] === undefined) {
+                if (nestedCommandObj.commands[lastCommandName] === undefined) {
                     if (nestedCommandObj.onCommandNotFound != undefined) {
                         const onCommandNotFound = nestedCommandObj.onCommandNotFound
                         
@@ -126,12 +126,15 @@ export class CommandProcessor<
                     }
                 }
                 
-                commandObj = nestedCommandObj.commands[subcommand]
-            } else return commandObj as Commands
+                commandObj = nestedCommandObj.commands[lastCommandName]
+            } else{
+                ctx.commandName = lastCommandName
+                return commandObj as Commands
+            }
         }
     }
     
-    private async tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
+    async tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
         try {
             return await func(ctx, ...args)
         } catch (e) {
@@ -139,13 +142,13 @@ export class CommandProcessor<
                 e = new Error(e as any)
             }
 
-            const onErrorFunc = await (getFunctionFromCls(cls, "onError"))
+            const onErrorFunc = getFunctionFromCls(cls, EventNames.error)
 
             if (onErrorFunc != undefined) {
                 // try execute local on error function 
                 try { 
-                    onErrorFunc(e, ctx)
-                    return
+                    const errorHandled = await onErrorFunc(e, ctx)
+                    if (typeof errorHandled !== 'boolean' || errorHandled) return false
                 } catch (e) {
                     if (!(e instanceof Error)) {
                         e = new Error(e as any)
@@ -195,28 +198,20 @@ export class CommandProcessor<
 
 export class BaseContext implements Context {
 
-    msg : string
-    content : string
-    
-    methodName : string
-    className  : string
+    msg! : string
+    content! : string
+    commandName! : string
+    methodName! : string
+    class!  : Class
     globals! : BaseGlobals // override the types!
     callEvent! : (event : string, ...args : any) => Promise<any>
-
-    constructor() {
-        this.msg = ""
-        this.content = ""
-
-        this.methodName = ""
-        this.className = ""
-    }
 }
 
 export class BaseGlobals implements Globals {
     moduleLoader! : ModuleLoader
-    callEvent! : typeof CommandProcessor.prototype.callEvent
+    commandProcessor! : CommandProcessor<any, any>
 
     constructor(
-        public prefix : string,
+        public prefix : string = '',
     ) { }
 }

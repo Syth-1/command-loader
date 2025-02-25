@@ -15,7 +15,8 @@ import {
     type BaseTransformer,
     type parent,
     BaseGlobals,
-    BaseContext
+    BaseContext,
+    getFunctionFromCls
 } from "./internals";
 
 
@@ -58,21 +59,30 @@ export class Commands {
 
             const childFunction : CommandFunction = descriptor.value;
 
-            descriptor.value = function (ctx : Context, args : string) {
+            descriptor.value = async function (ctx : Context, args : string) {
                 
-                ctx.className = methodClass
+                ctx.class = methodClass
                 ctx.methodName = methodName
 
                 const validatedArgs = validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)
 
                 if (validatedArgs === undefined) return; 
 
-                const retVal = childFunction.apply(methodClass.prototype || methodClass, [ctx, ...validatedArgs]);
+                // onCommandExecute
+                const check = await ctx.globals.commandProcessor.callEvent(EventNames.onExecute, ctx)
 
-                return retVal
+                if (typeof check === 'boolean' && !check) return
+                
+                const localCheckFunc = getFunctionFromCls(methodClass, EventNames.onExecute)
+
+                if (localCheckFunc != undefined) {
+                    const localCheck = await ctx.globals.commandProcessor.tryExecuteCommand(methodClass, localCheckFunc, ctx)
+        
+                    if (typeof localCheck === 'boolean' && !localCheck)  return
+                }
+
+                return childFunction.apply(methodClass.prototype || methodClass, [ctx, ...validatedArgs]);
             }
-
-            const parent : string | undefined = Object.getOwnPropertyDescriptor(methodClass, parentVarName)?.value
 
             buffers.CommandBuffer.add([commandName, ...alias], methodClass, descriptor.value)
         }
@@ -117,6 +127,10 @@ export class Commands {
 }
 
 export class Listener {
+    static precheck(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        buffers.EventBuffer.add(methodClass, EventNames.preCheck, descriptor.value)
+    }
+
     static message(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
         buffers.EventBuffer.add(methodClass, EventNames.onMessage, descriptor.value)
     }
@@ -124,9 +138,9 @@ export class Listener {
     static command(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
         buffers.EventBuffer.add(methodClass, EventNames.onCommand, descriptor.value)
     }
-    
-    static precheck(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
-        buffers.EventBuffer.add(methodClass, EventNames.preCheck, descriptor.value)
+
+    static execute(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
+        buffers.EventBuffer.add(methodClass, EventNames.onExecute, descriptor.value)
     }
 
     static error(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
@@ -211,7 +225,7 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
         }
 
         default : { // we check if object has transformer and handle it accordingly first!
-            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.className}-${ctx.methodName} arg: ${index}} - No transformer specified!`)
+            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.class.name}-${ctx.methodName} arg: ${index}} - No transformer specified!`)
         }
     }
 
