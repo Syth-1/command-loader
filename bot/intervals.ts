@@ -6,7 +6,7 @@ export class IntervalHandler {
 
 
     constructor(private cls : Class, public func : IntervalFunction, private interval : number, private globals : Globals) {
-        func(globals)
+        this.execute()
         this.reload(func, interval)
     }
 
@@ -19,11 +19,11 @@ export class IntervalHandler {
 
         setAbortableTimeout(() => {
             this.lastRefresh = Date.now()
-             this.func(this.globals)
+             this.execute()
 
             setAbortableInterval(() => { 
                 this.lastRefresh = Date.now()
-                this.func(this.globals)
+                this.execute()
             }, this.interval, this.abortController.signal)
 
         }, delay, this.abortController.signal);
