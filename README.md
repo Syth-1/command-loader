@@ -98,7 +98,7 @@ export class Module {
     }
 
     @Listener.error
-    async globalError(err : Error, ctx? : Context) { 
+    async globalError(err : Error) { 
         console.log("an error occured!", err.message)
     }
 }

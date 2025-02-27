@@ -8,6 +8,7 @@ modulesBuffer = {
     }
 }
 
+
 modules = {
     "module 1": {
         class: [SomeClass], // array of classes stored here to call onLoad and unLoad
@@ -69,5 +70,35 @@ commands = { // commands collection
             "command 2": { cls, SomeOtherFuncWithPrefix },
             "command 3": { cls, AnotherFuncWithPrefix }
         }
+    }
+}
+
+
+eventBuffer = { 
+    "event name" : [ func1, func2, func3 ]
+}
+
+events = { 
+    "file1" : { 
+        "event 1" : [ func1, func2, func3 ],
+        "event 2" : [ func1, func2, func3 ]
+    },
+    "file2" : {
+        "event1" : [ func1 ],
+        "event3" : [ func5 ]
+    }
+}
+
+// check if function already exists using method name, 
+// this will be used to refresh the function
+intervalBuffer = { 
+    "func name" : func,
+    "func2 name" : func2
+}
+
+intervals = { 
+    "file1" : { 
+        // file can load 2 classes, the function names have the possibility of being the same, use className:funcName
+        "func name" : intervalHandlerClass
     }
 }

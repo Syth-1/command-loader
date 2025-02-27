@@ -3,6 +3,7 @@ import { buffers, clearCache, parentVarName, type typedCls, type BaseGlobals } f
 import Queue from './utils/queue'
 import path from 'node:path'
 import { EventNames } from './internals'
+import { IntervalHandler } from './intervals'
 
 interface ModuleCommandsObj { 
     [key: string] : ModuleCommands
@@ -53,6 +54,7 @@ export class ModuleLoader {
     moduleCommandTree : ModuleCommandsObj = {}
     commands : CommandsCollection = {}
     eventListener : ListenerEvents = {}
+    intervals : IntervalEvents = {}
 
     private events = new Queue<Event>()
     private readonly globals : BaseGlobals
@@ -89,14 +91,15 @@ export class ModuleLoader {
 
         const importedCls : Array<typedCls> = await import(file)
 
-        console.log(importedCls)
-
         const commandsBufferMap : CommandBufferMap = new Map()
         const listenerEvents : ModuleEvent = {}
+        const intervals : ModuleInterval = {}
+        
 
-        for (const [moduleName, cls] of Object.entries(importedCls)) {
+        for (const [_moduleName, cls] of Object.entries(importedCls)) {
             if (!isClass(cls)) continue
 
+            // load events
             const events = buffers.EventBuffer.read(cls)
 
             if (events !== undefined) {
@@ -107,12 +110,15 @@ export class ModuleLoader {
                 }
             }
 
+            // load intervals
+            Object.assign(intervals, buffers.IntervalBuffer.read(cls) ?? {})
+
+            // load commands
             const commandsMap = buffers.CommandBuffer.read(cls) || {}
             const checkMap = buffers.CheckBuffer.read(cls) || []
-
-            if (!(Object.entries(commandsMap).length === 0 &&
-                checkMap.length === 0
-            )) { // so we dont process empty objects, if it only loaded events
+            
+            // so we dont process empty objects, if it only loaded events
+            if (Object.entries(commandsMap).length !== 0 || checkMap.length !== 0) {
                 commandsBufferMap.set(cls, {
                     commands : commandsMap,
                     check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
@@ -123,7 +129,7 @@ export class ModuleLoader {
         }
 
         // throws error if check failed.
-        return {...this.checkCommands(commandsBufferMap, file), listenerEvents}
+        return {...this.checkCommands(commandsBufferMap, file), listenerEvents, intervals}
     }
 
     purgeImportCache() { 
@@ -142,7 +148,7 @@ export class ModuleLoader {
             try {
                 if (this.moduleCommandTree.hasOwnProperty(file)) throw Error(`file '${file}' has already been loaded!`)
 
-                const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
+                const {copyCommands, moduleTree, listenerEvents, intervals} = await this.loadFile(file)
 
                 for (const cls of moduleTree.class) {
                     const loadFunc = getFunctionFromCls(cls, "onLoad")
@@ -155,6 +161,8 @@ export class ModuleLoader {
                 this.moduleCommandTree[file] = moduleTree
                 this.eventListener[file] = listenerEvents
 
+                this.reloadIntervals(this.intervals, file, intervals, this.globals)
+
             } catch (error : unknown) {
                 errors.push(error as Error)
             } finally { 
@@ -165,7 +173,7 @@ export class ModuleLoader {
         await callback(errors)
     }
 
-    private async unloadModuleHandler(files : Array<string> | string, callback : eventCallBack) {
+    private async unloadModuleHandler(files : Array<string> | string, callback : eventCallBack, reloading : boolean = false) {
 
         const errors : Array<Error> = []
 
@@ -174,16 +182,24 @@ export class ModuleLoader {
                 if (!this.moduleCommandTree.hasOwnProperty(file)) 
                     throw Error(`module ${file} has not been loaded!`)
 
-                    for (const cls of this.moduleCommandTree[file].class) {
-                        const unLoadFunc = getFunctionFromCls(cls, "onUnload")
-                        unLoadFunc?.(this.globals)
+                for (const cls of this.moduleCommandTree[file].class) {
+                    const unLoadFunc = getFunctionFromCls(cls, EventNames.onUnload)
+                    if (unLoadFunc) {
+                        this.globals.commandProcessor.tryExecuteFunction(
+                            cls, 
+                            unLoadFunc,
+                            this.globals
+                        )
                     }
+                }
 
-                    await this.globals.commandProcessor.callEvent(EventNames.onUnload, this.globals, file)
+                await this.globals.commandProcessor.callEvent(EventNames.onUnload, this.globals, file)
 
-                    this.commands = this.deleteModulesCommands(file)
-                    delete this.moduleCommandTree[file]
-                    delete this.eventListener[file]
+                this.commands = this.deleteModulesCommands(file)
+                delete this.moduleCommandTree[file]
+                delete this.eventListener[file]
+
+                if (!reloading) this.unloadIntervals(this.intervals[file])
 
             } catch (error : unknown) {
                 errors.push(error as Error)
@@ -199,22 +215,30 @@ export class ModuleLoader {
 
         for (let file of files) {
             try {
-                const {copyCommands, moduleTree, listenerEvents} = await this.loadFile(file)
+                const {copyCommands, moduleTree, listenerEvents, intervals} = await this.loadFile(file)
 
                 for (const cls of moduleTree.class) {
-                    const loadFunc = getFunctionFromCls(cls, "onLoad")
-                    loadFunc?.(this.globals)
+                    const loadFunc = getFunctionFromCls(cls, EventNames.onLoad)
+                    if (loadFunc) {
+                        this.globals.commandProcessor.tryExecuteFunction(
+                            cls, 
+                            loadFunc,
+                            this.globals
+                        )
+                    }
                 }
 
                 await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
 
                 await this.unloadModuleHandler([file], callbackError => {
                     errors.push(...callbackError)
-                })
+                }, true)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
                 this.eventListener[file] = listenerEvents
+
+                this.reloadIntervals(this.intervals, file, intervals, this.globals)
 
             } catch (error : unknown) {
                 errors.push(error as Error)
@@ -413,6 +437,39 @@ export class ModuleLoader {
         }
 
         return true
+    }
+
+    private reloadIntervals(intervalsMapObj : IntervalEvents, file : string, intervalModule : ModuleInterval, globals : Globals) { 
+
+        if (intervalsMapObj[file] === undefined)
+            intervalsMapObj[file] = {}
+
+        const intervalsMap = intervalsMapObj[file]
+
+        for (const [key, {func, interval, cls}] of Object.entries(intervalModule)) {
+            // new key!
+            if (!(key in intervalsMap)) {
+                intervalsMap[key] = new IntervalHandler(cls, func, interval, globals)
+            } else if (key in intervalsMap) { 
+                intervalsMap[key].reload(func, interval)
+            }
+        }
+
+        // for keys that dont exist: 
+        this.unloadIntervals( 
+            Object.keys(intervalsMap).filter(x => !intervalModule.hasOwnProperty(x))
+            .reduce(
+                (res, key) => (res[key] = intervalsMap[key], res), 
+                {} as IntervalEvents[number]
+            )
+        ) 
+    }
+
+    private unloadIntervals(intervalsMap : IntervalEvents[number]) { 
+        for (const [key, val] of Object.entries(intervalsMap)) {
+            val.stop()
+            delete intervalsMap[key]
+        };
     }
 
     private async handleEvent(event : Event) { 

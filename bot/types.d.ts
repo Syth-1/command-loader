@@ -1,5 +1,6 @@
+import type { IntervalHandler } from "./intervals"
 import type { ModuleLoader } from "./module_loader"
-import type { CommandProcessor } from "./process_command"
+import type { BaseContext, CommandProcessor } from "./process_command"
 
 declare global {
     type CommandMap = { [key: string] : CommandFunction }
@@ -40,11 +41,19 @@ declare global {
         check : CommandMap
     }
 
+    type errorObject = { 
+        ctx : BaseContext | undefined, 
+        globals : Globals
+    }
+
+    type errorFunction = (err : Error, ctx : errorObject) => Promise<void>
+
     type Class = { new(...args: any[]): any; name : string};
 
     interface Context { 
         msg : string
         content : string
+        parent : Array<string>
         commandName : string
         methodName : string
         class  : Class
@@ -63,6 +72,22 @@ declare global {
 
     interface ListenerEvents {
         [file: string] : ModuleEvent
+    }
+
+    type IntervalFunction = (global : Globals) => any
+
+    interface ModuleInterval { 
+        [key : string] : {
+            func : IntervalFunction,
+            interval : number,
+            cls : Class
+        }
+    }
+
+    interface IntervalEvents { 
+        [file : string] : {
+            [key : string] : IntervalHandler
+        }
     }
 
     type Complete<T> = {

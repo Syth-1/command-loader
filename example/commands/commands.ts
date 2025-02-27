@@ -77,7 +77,7 @@ export class TestCommands{
     // global error event!
     // chance ctx can be unknown, be wary to check and return out if you rely on ctx to handle the error!
     @Listener.error
-    async globalError(err : Error, ctx? : Context) { 
+    async globalError(err : Error, { ctx, globals } : errorObject) { 
         console.log("an error occured!", err.message)
     }
 
@@ -93,7 +93,7 @@ export class TestCommands{
     }
 
     // if an error happens within this class
-    async onError(error : Error, ctx? : Context) { 
+    async onError(error : Error, { ctx, globals } : errorObject) { 
         console.log("this is a local error message")
     }
 
@@ -137,6 +137,7 @@ export class AndAnotherClass {
     @Commands.command({name : "foo"})
     test(ctx : Context)  { 
         console.log("bar")
+        console.log(ctx.parent)
     }
 }
 

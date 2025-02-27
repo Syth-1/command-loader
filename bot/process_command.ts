@@ -1,4 +1,4 @@
-import { EventNames, ModuleLoader, StringParser, getFunctionFromCls } from "./internals";
+import { EventNames, ModuleLoader, StringParser, getFunctionFromCls, type EventRequiresCTX, type EventRequiresGlobal } from "./internals";
 
 type typedCls<T> = new (...args : any) => T
 
@@ -42,7 +42,9 @@ export class CommandProcessor<
 
         if (!msg.startsWith(this.globals.prefix)) return;
 
-        const preCheck = await this.callEvent(EventNames.preCheck, context, msg)
+        context.msg = msg.substring(this.globals.prefix.length)
+
+        const preCheck = await this.callEvent(EventNames.preCheck, context)
 
         if (typeof preCheck === 'boolean') {
             if (!preCheck) return
@@ -51,8 +53,6 @@ export class CommandProcessor<
         } else {
             msg = context.msg
         }
-        
-        msg = msg.substring(this.globals.prefix.length)
 
         let commandParser = new StringParser(msg, false)
 
@@ -95,6 +95,7 @@ export class CommandProcessor<
 
     
     private async tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context, commandName : string) {
+        const parent = []
         let lastCommandName = commandName
         while (true) {
             if (typeof commandObj === 'object' && !commandObj.hasOwnProperty("cls")) {
@@ -107,6 +108,8 @@ export class CommandProcessor<
                 }
 
                 let nestedCommandObj = commandObj as NestedCommandObj
+
+                parent.push(lastCommandName)
                 lastCommandName = commandParser.getArg().toLowerCase()
                 
                 if (lastCommandName.length === 0) {
@@ -128,13 +131,50 @@ export class CommandProcessor<
                 
                 commandObj = nestedCommandObj.commands[lastCommandName]
             } else{
+                ctx.parent = parent 
                 ctx.commandName = lastCommandName
                 return commandObj as Commands
             }
         }
     }
     
-    async tryExecuteCommand(cls : Class, func : Function, ctx : Context, ...args : any) { 
+    async tryExecuteFunction(cls : Class, func : Function, globals : Globals, ...args : any) { 
+        try {
+            return await func(...args, globals, ...args)
+        } catch (e) {
+            if (!(e instanceof Error)) {
+                e = new Error(e as any)
+            }
+
+            const onErrorFunc = getFunctionFromCls(cls, EventNames.error)
+
+            if (onErrorFunc != undefined) {
+                // try execute local on error function 
+                try { 
+                    const errorHandled = await onErrorFunc(e)
+                    if (typeof errorHandled !== 'boolean' || errorHandled) return false
+                } catch (e) {
+                    if (!(e instanceof Error)) {
+                        e = new Error(e as any)
+                    }
+
+                    this.callEvent(EventNames.error, e as Error, {
+                        ctx : undefined,
+                        globals : globals
+                    })
+                } 
+            }
+
+            this.callEvent(EventNames.error, e as Error, {
+                ctx : undefined, 
+                globals : globals
+            })
+
+            return false
+        }
+    }
+
+    async tryExecuteCommand(cls : Class, func : Function, ctx : BaseContext, ...args : any) { 
         try {
             return await func(ctx, ...args)
         } catch (e) {
@@ -154,17 +194,24 @@ export class CommandProcessor<
                         e = new Error(e as any)
                     }
 
-                    this.callEvent(EventNames.error, e, ctx)
+                    this.callEvent(EventNames.error, e as Error, {
+                        ctx : ctx, 
+                        globals : ctx.globals
+                    })
                 } 
             }
 
-            this.callEvent(EventNames.error, e, ctx)
+            this.callEvent(EventNames.error, e as Error, {
+                ctx : ctx, 
+                globals : ctx.globals
+            })
 
             return false
         }
     }
 
-    async callEvent( event : string, ...args : any ) { 
+
+    async callEvent<TEventName extends string>(event : TEventName, ...args : EventParams<TEventName> ) { 
         for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
             const funcArr = moduleEvents[event]
             if (funcArr === undefined) continue
@@ -185,7 +232,11 @@ export class CommandProcessor<
 
                     await this.callEvent(
                         EventNames.error, 
-                        error
+                        error,
+                        {
+                            ctx : undefined,
+                            globals : this.globals
+                        }
                     )
 
                     return false // if an error occurs, we hault execution flow
@@ -196,15 +247,21 @@ export class CommandProcessor<
 }
 
 
-export class BaseContext implements Context {
+type EventParams<T extends string> = (
+    T extends typeof EventNames.error ? [Error, errorObject, ...any[]] :
+    T extends EventRequiresCTX ? [Context, ...any[]] :
+    T extends EventRequiresGlobal ? [Globals, ...any[]] :
+    any[]
+)
 
+export class BaseContext implements Context {
     msg! : string
     content! : string
+    parent! : Array<string>;
     commandName! : string
     methodName! : string
     class!  : Class
     globals! : BaseGlobals // override the types!
-    callEvent! : (event : string, ...args : any) => Promise<any>
 }
 
 export class BaseGlobals implements Globals {

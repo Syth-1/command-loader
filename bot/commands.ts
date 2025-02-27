@@ -124,6 +124,12 @@ export class Commands {
     static check(methodClass : any, methodName : string, descriptor: PropertyDescriptor) { 
         buffers.CheckBuffer.add(methodClass, descriptor.value)
     }
+
+    static interval(interval : number) {
+        return (methodClass : any, methodName : string, descriptor : PropertyDescriptor) => { 
+            buffers.IntervalBuffer.add(methodClass, descriptor.value, interval)
+        }
+    }
 }
 
 export class Listener {
@@ -157,8 +163,10 @@ export class Listener {
 export interface Module {
     onLoad?(globals : BaseGlobals) : Promise<void>
     onUnload?(globals : BaseGlobals) : Promise<void>
-    onError?(error : Error, ctx? : BaseContext) : Promise<void>
+    onError? : errorFunction
     onCommand?(ctx : BaseContext) : Promise<void | string | boolean>
+    onMessage?(ctx : BaseContext) : Promise<void | string | boolean>
+    onExecute?(ctx : BaseContext) : Promise<void | string | boolean>
 }
 
 function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {

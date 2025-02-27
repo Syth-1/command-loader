@@ -11,6 +11,7 @@ interface BufferClass {
 
 type commands = CommandMap | undefined
 type events = ModuleEvent | undefined
+type intervals = ModuleInterval | undefined
 
 
 class CommandBuffer implements BufferClass { 
@@ -91,11 +92,36 @@ class CheckBuffer implements BufferClass {
     }
 }
 
+class IntervalBuffer implements BufferClass {
+    readonly varName = "__intervalBuffer__"
+
+    add(cls : typedCls, func : Function, interval : number) { 
+
+        if (cls[this.varName] === undefined)
+            cls[this.varName] = {}
+
+        cls[this.varName]![`${cls.name}:${func.name}`] = {
+            func : func as IntervalFunction,
+            interval: interval,
+            cls : cls
+        }
+    }
+    
+    read(cls : typedCls) { 
+        return cls.prototype[this.varName] as intervals
+    }
+
+    delete(cls : typedCls) {
+        delete cls.prototype[this.varName]
+    }
+}
+
 
 export const buffers = classToInstancedDict({
     CommandBuffer,
     CheckBuffer,
-    EventBuffer
+    EventBuffer,
+    IntervalBuffer
 })
 
 export type typedCls = Class & { 
