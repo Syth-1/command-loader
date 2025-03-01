@@ -90,6 +90,8 @@ declare global {
         }
     }
 
+    type reflectTypes = "Number" | "Boolean" | "String" | "Object"
+
     type Complete<T> = {
         [P in keyof Required<T>]: Pick<T, P> extends Required<Pick<T, P>> ? T[P] : (T[P] | undefined);
     }
