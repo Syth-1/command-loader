@@ -16,7 +16,9 @@ import {
     type parent,
     BaseGlobals,
     BaseContext,
-    getFunctionFromCls
+    getFunctionFromCls,
+
+    ArgsMetadata
 } from "./internals";
 
 
@@ -28,8 +30,6 @@ interface commandName {
 type parentArg = AtLeastOne<parent>
 
 type Class = { new(...args: any[]): any; }; 
-
-export const ArgsMetadataKey = '__argsNames__'
 
 export class Commands {
 
@@ -84,7 +84,10 @@ export class Commands {
                 return childFunction.apply(methodClass.prototype || methodClass, [ctx, ...validatedArgs]);
             }
 
-            Reflect.defineMetadata(ArgsMetadataKey, getArgName(methodClass[methodName]), descriptor.value)
+            ArgsMetadata.setArgsMetadata(
+                descriptor.value, 
+                methodClass[methodName]
+            )
 
             // add back the original method name!
             Object.defineProperty(descriptor.value, "name", { value: methodName });
@@ -244,24 +247,4 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
     }
 
     return transformer(ctx, stringParser)
-}
-
-function getArgName(func : (args : any) => any) {
-    const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-    const ARGUMENT_NAMES = /[,]|\s*(?:\.\.\.)?([A-Za-z_$][0-9A-Za-z_$]*)(?:\s)?.*?(?:,|$)/gm;
-
-    const fnStr = func.toString().replace(STRIP_COMMENTS, '');
-    const result : Array<string> | null = Array.from((
-        fnStr.slice(
-            fnStr.indexOf(
-                '(')+1, 
-                fnStr.indexOf(')')
-            ).matchAll(ARGUMENT_NAMES)
-        ),
-        match => match[1]
-    )
-
-    if(result === null)
-        return []
-    return result;
 }
