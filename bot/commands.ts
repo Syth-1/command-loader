@@ -18,7 +18,8 @@ import {
     BaseContext,
     getFunctionFromCls,
 
-    ArgsMetadata
+    ArgsMetadata,
+    DescMetadata
 } from "./internals";
 
 
@@ -48,8 +49,10 @@ export class Commands {
                 alias = commandInfo.alias || []
             }
 
-            const types = Reflect.getMetadata("design:paramtypes", methodClass, methodName);
-            const argsInfo : Array<reflectTypes> = types.map((type : { name : string }) => type.name );
+            const argsInfo = ArgsMetadata.getParamMetadata(
+                methodClass,
+                methodName
+            )
             
             const ctxArg = argsInfo.shift() // first item is for context!
 
@@ -85,8 +88,8 @@ export class Commands {
             }
 
             ArgsMetadata.setArgsMetadata(
-                descriptor.value, 
-                methodClass[methodName]
+                methodClass, 
+                methodName
             )
 
             // add back the original method name!
@@ -137,6 +140,17 @@ export class Commands {
     static interval(interval : number) {
         return (methodClass : any, methodName : string, descriptor : PropertyDescriptor) => { 
             buffers.IntervalBuffer.add(methodClass, descriptor.value, interval)
+        }
+    }
+
+
+    static description(description : string) {
+        return (methodClass : any, methodName : string | undefined = undefined) => {
+            DescMetadata.setArgsMetadata(
+                description,
+                methodClass, 
+                methodName
+            )
         }
     }
 }

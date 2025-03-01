@@ -2,23 +2,41 @@
 export class ArgsMetadata {
     private static readonly ArgsMetadataKey = '__argsNames__'
 
-    public static setArgsMetadata(target : Object, func : (args : any) => any) { 
-        Reflect.defineMetadata(
+    public static getParamMetadata(cls : any, methodName : string) : Array<reflectTypes> {
+
+        if ('prototype' in cls) cls = cls.prototype
+
+        const types =  Reflect.getMetadata(
+            "design:paramtypes",
+            cls, 
+            methodName
+        )
+
+        return types.map((type : { name : string }) => type.name );
+    }
+
+    public static getArgsMetadata(cls : any, methodName : string) : Array<string> | undefined {
+
+        if ('prototype' in cls) cls = cls.prototype
+
+        return Reflect.getMetadata(
             ArgsMetadata.ArgsMetadataKey, 
-            ArgsMetadata.getArgName(func), 
-            target
+            cls, 
+            methodName
         )
     }
 
-    public static getArgsMetadata(target : Object) : Array<string> | undefined { 
-        return Reflect.getMetadata(
+    public static setArgsMetadata(cls : any, methodName : string) { 
+        Reflect.defineMetadata(
             ArgsMetadata.ArgsMetadataKey, 
-            target
+            ArgsMetadata.getArgName(cls[methodName]), 
+            cls,
+            methodName
         )
     }
 
     private static getArgName(func : (args : any) => any) {
-        const RE_STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+        const RE_STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
         const RE_ARGUMENT_NAMES = /[,]|\s*(?:\.\.\.)?([A-Za-z_$][0-9A-Za-z_$]*)(?:\s)?.*?(?:,|$)/gm;
 
         const strippedFunc = func.toString().replace(RE_STRIP_COMMENTS, '');
@@ -38,5 +56,41 @@ export class ArgsMetadata {
         if (result === null) return []
         
         return result;
+    }
+}
+
+export class DescMetadata {
+    private static readonly DescMetadataKey = '__CommandDescription__'
+
+
+    public static getArgsMetadata(cls : any, methodName : string) : string {
+        
+        const description = Reflect.getMetadata(
+            DescMetadata.DescMetadataKey, 
+            cls.prototype, 
+            methodName
+        )
+
+        if (description) return description
+            
+        return Reflect.getMetadata(
+            DescMetadata.DescMetadataKey, 
+            cls, 
+        )
+    }
+
+    public static setArgsMetadata(description : string, cls : any, methodName : string | undefined) { 
+        if (methodName)
+            Reflect.defineMetadata(
+                DescMetadata.DescMetadataKey, 
+                description, 
+                cls,
+                methodName
+            )
+        else Reflect.defineMetadata(
+            DescMetadata.DescMetadataKey, 
+            description, 
+            cls,
+        )
     }
 }
