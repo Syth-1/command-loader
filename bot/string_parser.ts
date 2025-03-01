@@ -31,13 +31,6 @@ export class StringParser{
         this.throwError = throwError
     }
 
-    splitStr(str : string) : Array<string> { 
-        const preSplit = str.split(/\s/gm, 1)[0]
-        const postSplit = str.substring(preSplit === '' ? 1 : preSplit.length);
-
-        return [preSplit, postSplit]
-    }
-
     getArg(quoted : boolean = true) : string {
         let [arg, str] = this.splitStr(this.internalString)
         this.internalString = str
@@ -55,7 +48,28 @@ export class StringParser{
         return arg
     }
 
-    extractQuotedString(arg : string) {
+    getRestOfString() {
+        const restOfString = this.internalString.trim()
+
+        if (restOfString === '' && this.throwError) {
+            throw new CommandError.EndOfArgs("END OF STRING")
+        }
+
+        return restOfString
+    }
+
+    getMultiple(amount : number) { 
+        return Array(amount).fill(0).map(() => this.getArg());
+    }
+
+    private splitStr(str : string) : Array<string> { 
+        const preSplit = str.split(/\s/gm, 1)[0]
+        const postSplit = str.substring(preSplit === '' ? 1 : preSplit.length);
+
+        return [preSplit, postSplit]
+    }
+
+    private extractQuotedString(arg : string) {
         for (const [startQuote, endQuote] of Object.entries(quotes)) {
             if (arg.match(quoteRegex[startQuote].startQuoteRegex)) {
 
@@ -76,19 +90,5 @@ export class StringParser{
                 break;
             }
         }
-    }
-
-    getRestOfString() {
-        const restOfString = this.internalString.trim()
-
-        if (restOfString === '' && this.throwError) {
-            throw new CommandError.EndOfArgs("END OF STRING")
-        }
-
-        return restOfString
-    }
-
-    getMultiple(amount : number) { 
-        return Array(amount).fill(0).map(() => this.getArg());
     }
 }
