@@ -378,7 +378,7 @@ export class ModuleLoader {
         }
 
         for (const [prefix, child] of Object.entries(moduleTree.subcommands)) {
-            const childCommandObj = copyCommands[prefix] as NestedCommandObj
+            const childCommandObj = copyCommands[prefix]
 
             this.deleteSubCommand(child, childCommandObj)
 
@@ -497,11 +497,16 @@ export function getFunctionFromCls(cls : Class, funcName : string) : Function | 
     return cls[funcName as keyof Class] || cls.prototype?.[funcName]
 }
 
-export function isCommandObj(val : any) { 
-    return val?.hasOwnProperty("cls") && 
-        val?.hasOwnProperty("command") && 
-        typeof val["command"] == 'function' ? true : false
-}
+export function isCommandObj(val: any): val is Commands {
+    if (typeof val !== 'object') return false
+
+    const checks: Record<keyof Commands, boolean> = {
+      cls: 'cls' in val,
+      command: typeof val.command === 'function',
+    };
+  
+    return Object.values(checks).every(Boolean);
+  }
 
 function checkSkipImport(filePath: string) { 
     const cwd = path.dirname(Bun.main);
