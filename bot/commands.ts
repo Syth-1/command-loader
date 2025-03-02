@@ -146,7 +146,7 @@ export class Commands {
 
     static description(description : string) {
         return (methodClass : any, methodName : string | undefined = undefined) => {
-            DescMetadata.setArgsMetadata(
+            DescMetadata.setDescMetadata(
                 description,
                 methodClass, 
                 methodName
