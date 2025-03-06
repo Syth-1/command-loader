@@ -68,6 +68,7 @@ export class CommandProcessor<
         
         if (func === undefined) return; 
 
+        context.commandObj = func
         context.content = commandParser.getRestOfString()
 
         const onCommandCheck = await this.callEvent(EventNames.onCommand, context)
@@ -124,6 +125,8 @@ export class CommandProcessor<
                     if (nestedCommandObj.onCommandNotFound != undefined) {
                         const onCommandNotFound = nestedCommandObj.onCommandNotFound
                         
+                        ctx.commandObj = onCommandNotFound as Commands
+
                         this.tryExecuteCommand(onCommandNotFound.cls, onCommandNotFound.command, ctx)
                         return
                     }
@@ -259,9 +262,8 @@ export class BaseContext implements Context {
     content! : string
     parent! : Array<string>;
     commandName! : string
-    methodName! : string
-    class!  : Class
     globals! : BaseGlobals // override the types!
+    commandObj! : Commands
 }
 
 export class BaseGlobals implements Globals {

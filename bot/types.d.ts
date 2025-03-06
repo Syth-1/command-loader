@@ -19,7 +19,7 @@ declare global {
     type NestedCommandObj = {
         onCommandNotFound? : {
             cls : Class,
-            command : (commandName : string) => void,
+            command : (ctx : Context) => void,
         }
         onDefaultCommand? : {
             cls : Class, 
@@ -55,9 +55,8 @@ declare global {
         content : string
         parent : Array<string>
         commandName : string
-        methodName : string
-        class  : Class
         globals : Globals
+        commandObj : Commands
     }
 
     interface Globals {

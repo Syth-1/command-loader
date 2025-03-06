@@ -63,10 +63,6 @@ export class Commands {
             const childFunction : CommandFunction = descriptor.value;
 
             descriptor.value = async function (ctx : Context, args : string) {
-                
-                ctx.class = methodClass
-                ctx.methodName = methodName
-
                 const validatedArgs = validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)
 
                 if (validatedArgs === undefined) return; 
@@ -216,14 +212,18 @@ function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectType
                 console.log(error.message) // code error
                 return undefined
             } else {
+                if (error instanceof CommandError.ParseError)
+                    error.arg = index
+
                 throw error // throw error upstream to error handler!
             }
         }
     }
 
     if (convertedArgs.length < argsRequired) {
-        throw new CommandError.ParseError(
-            `Invalid Number Of Arguments:\nExpected ${argsRequired}, Recived ${convertedArgs.length}`
+        throw new CommandError.InvalidArgsCount(
+            convertedArgs.length, 
+            argsRequired
         )
     }
 
@@ -256,7 +256,7 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
         }
 
         default : { // we check if object has transformer and handle it accordingly first!
-            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.class.name}-${ctx.methodName} arg: ${index}} - No transformer specified!`)
+            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.commandObj.cls.name}-${ctx.commandObj.command.name} arg: ${index}} - No transformer specified!`)
         }
     }
 
