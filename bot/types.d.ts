@@ -51,7 +51,8 @@ declare global {
     type Class = { new(...args: any[]): any; name : string};
 
     interface Context { 
-        prefix : string,
+        prefix : Array<string>,
+        currentPrefix : string
         msg : string
         content : string
         parent : Array<string>
