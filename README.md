@@ -10,11 +10,11 @@ Command-Loader is an agnostic bot library, designed to make creating text bots e
 
 - Installing a new submodule: 
 ```bash
-    git submodule add <url>
+    git submodule add https://github.com/Syth-1/command-loader.git
     git submodule update --init
 
     # updating existing submodules to newest commit:
-    git submodule update --remote --merge
+    git submodule update --remote
 ```
 - Installing dependencies & running the example:
 ```
