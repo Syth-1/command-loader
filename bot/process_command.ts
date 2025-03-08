@@ -22,11 +22,12 @@ export class CommandProcessor<
         this.globals = globals
     }
 
-    async processCommands(msg : string, ...args : ConstructorParameters<T>) {
+    async processCommands(prefix : string, msg : string, ...args : ConstructorParameters<T>) {
         msg = msg.trim();
         
         const context = new this.contextCls(...args)
         
+        context.prefix = prefix
         context.msg = msg;
         context.globals = this.globals
         
@@ -40,9 +41,9 @@ export class CommandProcessor<
             msg = context.msg
         }
 
-        if (!msg.startsWith(this.globals.prefix)) return;
+        if (!msg.startsWith(context.prefix)) return;
 
-        context.msg = msg.substring(this.globals.prefix.length)
+        context.msg = msg.substring(context.prefix.length)
 
         const preCheck = await this.callEvent(EventNames.preCheck, context)
 
@@ -264,13 +265,10 @@ export class BaseContext implements Context {
     commandName! : string
     globals! : BaseGlobals // override the types!
     commandObj! : Commands
+    prefix! : string
 }
 
 export class BaseGlobals implements Globals {
     moduleLoader! : ModuleLoader
     commandProcessor! : CommandProcessor<any, any>
-
-    constructor(
-        public prefix : string = '',
-    ) { }
 }

@@ -44,6 +44,7 @@ import { readdir } from 'node:fs/promises'
 import path from 'path'
 
 const moduleFolder = "modules"
+const prefix = '/'
 
 async function getModuleFiles(folder : string) {
     return (await readdir(`./${folder}`))
@@ -52,13 +53,9 @@ async function getModuleFiles(folder : string) {
 }
 
 async function main() {
-    const globals = new BaseGlobals(
-        "/", // prefix
-    )
-
     const commandProcessor = new CommandProcessor(
         BaseContext,
-        globals
+        BaseGlobals
     )
 
     await commandProcessor.moduleLoader.scheduleEvent(
@@ -73,7 +70,7 @@ async function main() {
     )
 
     for await (const line of console)
-        commandProcessor.processCommands(line)
+        commandProcessor.processCommands(prefix, line)
 
 }
 

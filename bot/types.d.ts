@@ -51,6 +51,7 @@ declare global {
     type Class = { new(...args: any[]): any; name : string};
 
     interface Context { 
+        prefix : string,
         msg : string
         content : string
         parent : Array<string>
@@ -60,7 +61,6 @@ declare global {
     }
 
     interface Globals {
-        prefix : string;
         moduleLoader : ModuleLoader
         commandProcessor : CommandProcessor<any, any>
     } 
