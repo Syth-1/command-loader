@@ -225,7 +225,7 @@ export class CommandProcessor<
     }
 
 
-    async callEvent<TEventName extends string>(event : TEventName, ...args : EventParams<TEventName> ) { 
+    async callEvent<TEventName extends typeof EventNames[keyof typeof EventNames] | string & {}>(event : TEventName, ...args : EventParams<TEventName> ) { 
         for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
             const funcArr = moduleEvents[event]
             if (funcArr === undefined) continue
