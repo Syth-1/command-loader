@@ -1,6 +1,6 @@
 
 export class ArgsMetadata {
-    private static readonly ArgsMetadataKey = '__argsNames__'
+    private static readonly ArgsMetadataKey = Symbol('__argsNames__')
 
     public static getParamMetadata(cls : any, methodName : string) : Array<reflectTypes> {
 
@@ -60,7 +60,7 @@ export class ArgsMetadata {
 }
 
 export class DescMetadata {
-    private static readonly DescMetadataKey = '__CommandDescription__'
+    private static readonly DescMetadataKey = Symbol('__CommandDescription__')
 
 
     public static getDescMetadata(cls : any, methodName : string) : string {
