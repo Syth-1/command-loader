@@ -40,7 +40,10 @@ export class StringParser{
         }
 
         if (quoted) {
-            this.extractQuotedString(arg)
+            const quotedString = this.extractQuotedString(arg)
+            
+            if (quotedString) 
+                return quotedString
         }
 
         if (arg === '' && this.throwError) throw new CommandError.EndOfArgs("END OF STRING")
@@ -87,8 +90,10 @@ export class StringParser{
                 
                 this.internalString = this.internalString.substring(removeLength)
 
-                break;
+                return arg
             }
         }
+
+        return undefined
     }
 }
