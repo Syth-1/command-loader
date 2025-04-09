@@ -128,7 +128,8 @@ export type typedCls = Class & {
     [ K in keyof typeof buffers as typeof buffers[K]['varName'] ] : ReturnType<typeof buffers[K]['read']>
 }
 
-export const parentVarName = Symbol('__parent__')
+export const parentVarName = '__parent__'
+export const cacheFlag = 'useCache'
 
 export interface parent {
     name? : string, 
@@ -136,6 +137,8 @@ export interface parent {
 }
 
 export function clearCache(cls : typedCls) { 
+    if (cacheFlag in cls && cls.useCache === true) return
+
     for (const bufferCls of Object.values(buffers))
         bufferCls.delete(cls)
 }
