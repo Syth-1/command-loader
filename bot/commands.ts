@@ -80,7 +80,7 @@ export class Commands {
                     if (typeof localCheck === 'boolean' && !localCheck)  return
                 }
 
-                return childFunction.apply(methodClass.prototype || methodClass, [ctx, ...validatedArgs]);
+                return childFunction(ctx, ...validatedArgs);
             }
 
             ArgsMetadata.setArgsMetadata(

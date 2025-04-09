@@ -99,6 +99,9 @@ export class ModuleLoader {
         for (const [_moduleName, cls] of Object.entries(importedCls)) {
             if (!isClass(cls)) continue
 
+            // instance the class we want to bind to!
+            const instancedCls = new cls()
+
             // load events
             const events = buffers.EventBuffer.read(cls)
 
@@ -106,12 +109,14 @@ export class ModuleLoader {
                 for (const [name, funcArr] of Object.entries(events)) {
                     if (!listenerEvents.hasOwnProperty(name)) listenerEvents[name] = []
 
-                    listenerEvents[name].push(...funcArr)
+                    listenerEvents[name].push(...funcArr.map(func => func.bind(instancedCls)))
                 }
             }
 
             // load intervals
-            Object.assign(intervals, buffers.IntervalBuffer.read(cls) ?? {})
+            const intervalsObj = buffers.IntervalBuffer.read(cls) ?? {}
+            Object.values(intervalsObj).forEach(val => val.func = val.func.bind(instancedCls))
+            Object.assign(intervalsObj)
 
             // load commands
             const commandsMap = buffers.CommandBuffer.read(cls) || {}
@@ -119,7 +124,7 @@ export class ModuleLoader {
             
             // so we dont process empty objects, if it only loaded events
             if (Object.entries(commandsMap).length !== 0 || checkMap.length !== 0) {
-                commandsBufferMap.set(cls, {
+                commandsBufferMap.set(instancedCls, {
                     commands : commandsMap,
                     check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
                 })
@@ -333,7 +338,7 @@ export class ModuleLoader {
             //@ts-ignore
             commandObj[typedKey] = {
                 cls : cls,
-                command : func
+                command : func.bind(cls)
             }
         }
 
@@ -345,7 +350,7 @@ export class ModuleLoader {
             childObj.check.push(key)
             commandObj.check[key] = {
                 cls: cls, 
-                command : val
+                command : val.bind(cls)
             }
         }
     }
@@ -358,7 +363,7 @@ export class ModuleLoader {
 
             commandCollection[command] = {
                 cls : cls, 
-                command : func
+                command : func.bind(cls)
             }
             moduleTreeCommandList.push(command)
         }
