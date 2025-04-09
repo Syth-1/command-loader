@@ -51,7 +51,7 @@ declare global {
     type Class = { new(...args: any[]): any; name : string};
 
     interface Context { 
-        prefix : Array<string>,
+        prefix : Array<string | RegExp>,
         currentPrefix : string
         msg : string
         content : string

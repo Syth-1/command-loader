@@ -1,6 +1,11 @@
-import { EventNames, ModuleLoader, StringParser, getFunctionFromCls, type EventRequiresCTX, type EventRequiresGlobal } from "./internals";
-
-type typedCls<T> = new (...args : any) => T
+import { 
+    EventNames, 
+    ModuleLoader, 
+    StringParser, 
+    getFunctionFromCls, 
+    type EventRequiresCTX, 
+    type EventRequiresGlobal 
+} from "./internals";
 
 export class CommandProcessor<
     T extends new (...args : any) => BaseContext, 
@@ -22,12 +27,12 @@ export class CommandProcessor<
         this.globals = globals
     }
 
-    async processCommands(prefix : string | Array<string>, msg : string, ...args : ConstructorParameters<T>) {
+    async processCommands(prefix : string | RegExp | Array<string | RegExp>, msg : string, ...args : ConstructorParameters<T>) {
         msg = msg.trim();
         
         const context = new this.contextCls(...args)
         
-        context.prefix = typeof prefix === 'string' ? [ prefix ] : prefix
+        context.prefix = typeof prefix === 'string' || prefix instanceof RegExp ? [ prefix ] : prefix
         context.msg = msg;
         context.globals = this.globals
         
@@ -44,10 +49,20 @@ export class CommandProcessor<
         let currentPrefix : string | undefined = undefined
 
         for (const checkPrefix of context.prefix) {
-            if (msg.startsWith(checkPrefix)) {
-                currentPrefix = checkPrefix
-                break
-            }
+            if (typeof checkPrefix === 'string') {
+                if (msg.startsWith(checkPrefix)) {
+                    currentPrefix = checkPrefix
+                    break
+                }
+                continue
+            } 
+            // else
+
+            const match = msg.match(checkPrefix)
+
+            if (!match) continue
+            currentPrefix = match[0]
+            break
         }
 
         if (currentPrefix === undefined) return
@@ -275,7 +290,7 @@ export class BaseContext implements Context {
     commandName! : string
     globals! : BaseGlobals // override the types!
     commandObj! : Commands
-    prefix! : Array<string>
+    prefix! : Array<string | RegExp>
     currentPrefix!: string;
 }
 
