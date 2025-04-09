@@ -7,6 +7,8 @@ export class BaseError extends Error {
     }
 }
 
+export const useCache = true
+
 export namespace CommandError {
 
     export class ObjectArgError extends BaseError { }
