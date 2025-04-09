@@ -1,5 +1,5 @@
 import { cloneDeepWith } from 'lodash'
-import { buffers, clearCache, parentVarName, type typedCls, type BaseGlobals } from './internals'
+import { buffers, clearCache, parentVarName, cacheFlag, type typedCls, type BaseGlobals } from './internals'
 import Queue from './utils/queue'
 import path from 'node:path'
 import { EventNames } from './internals'
@@ -58,8 +58,6 @@ export class ModuleLoader {
 
     private events = new Queue<Event>()
     private readonly globals : BaseGlobals
-
-    readonly cacheFlag = "useCache"
 
     constructor(globals : BaseGlobals) {
         
@@ -139,7 +137,7 @@ export class ModuleLoader {
 
     purgeImportCache() { 
         for (const [file, module] of Object.entries(require.cache)) {
-            if (checkSkipImport(file) || (module !== undefined && module.exports[this.cacheFlag] === true)) continue
+            if (checkSkipImport(file) || (module !== undefined && module.exports[cacheFlag] === true)) continue
         
             delete require.cache[file]
         }
