@@ -1,9 +1,11 @@
+import { getFuncName } from "./utils/func-name";
 
 export class ArgsMetadata {
     private static readonly ArgsMetadataKey = Symbol('__argsNames__')
 
     public static getParamMetadata(cls : any, methodName : string) : Array<reflectTypes> {
 
+        methodName = getFuncName(methodName)
         if ('prototype' in cls) cls = cls.prototype
 
         const types =  Reflect.getMetadata(
@@ -27,6 +29,8 @@ export class ArgsMetadata {
     }
 
     public static setArgsMetadata(cls : any, methodName : string) { 
+        methodName = getFuncName(methodName)
+
         Reflect.defineMetadata(
             ArgsMetadata.ArgsMetadataKey, 
             ArgsMetadata.getArgName(cls[methodName]), 
@@ -64,7 +68,8 @@ export class DescMetadata {
 
 
     public static getDescMetadata(cls : any, methodName : string) : string {
-        
+        methodName = getFuncName(methodName)
+
         const description = Reflect.getMetadata(
             DescMetadata.DescMetadataKey, 
             cls.prototype, 
@@ -80,6 +85,8 @@ export class DescMetadata {
     }
 
     public static setDescMetadata(description : string, cls : any, methodName : string | undefined) { 
+        methodName = getFuncName(methodName)
+
         if (methodName)
             Reflect.defineMetadata(
                 DescMetadata.DescMetadataKey, 

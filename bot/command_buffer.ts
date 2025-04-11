@@ -1,6 +1,8 @@
 // we first store the commands into a commands buffer incase there's an error when loading the file,
 // we can simply clear the buffer without making changes to the actual commands list. 
 
+import { getFuncName } from "./utils/func-name"
+
 interface BufferClass { 
     /** ⚠️**CAUTION**⚠️ - *Typescript does not enforce* `readonly` */
     readonly varName : string
@@ -14,12 +16,12 @@ type events = ModuleEvent | undefined
 type intervals = ModuleInterval | undefined
 
 
-class CommandBuffer implements BufferClass { 
+class CommandBuffer implements BufferClass {
     readonly varName = '__commandBuffer__'
 
     add(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
 
-        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${func.name} - existing func: ${cls[this.varName]?.[name].name} in class : ${cls.name})`) 
+        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${getFuncName(func)} - existing func: ${getFuncName(cls[this.varName]?.[name].name)} in class : ${cls.name})`) 
 
 
         if (cls[this.varName] === undefined)
@@ -100,7 +102,7 @@ class IntervalBuffer implements BufferClass {
         if (cls[this.varName] === undefined)
             cls[this.varName] = {}
 
-        cls[this.varName]![`${cls.name}:${func.name}`] = {
+        cls[this.varName]![`${cls.name}:${getFuncName(func)}`] = {
             func : func as IntervalFunction,
             interval: interval,
             cls : cls

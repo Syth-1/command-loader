@@ -6,6 +6,7 @@ import {
     type EventRequiresCTX, 
     type EventRequiresGlobal 
 } from "./internals";
+import { getFuncName } from "./utils/func-name";
 
 export class CommandProcessor<
     T extends new (...args : any) => BaseContext, 
@@ -256,7 +257,7 @@ export class CommandProcessor<
                     // check if a custom error message is thrown, else provide a diagnostic error
                     let error = (e instanceof Error && Object.getPrototypeOf(e) !== Error ? 
                         e : 
-                        Error(`calling function: '${func.name}' for event '${event}' failed! args passed: ${args}`)
+                        Error(`calling function: '${getFuncName(func)}' for event '${event}' failed! args passed: ${args}`)
                     )
 
                     await this.callEvent(

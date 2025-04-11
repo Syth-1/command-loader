@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import { isArray } from "lodash";
+import { getFuncName } from './utils/func-name';
 import { 
     buffers, 
     StringParser,
@@ -256,7 +257,7 @@ function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflect
         }
 
         default : { // we check if object has transformer and handle it accordingly first!
-            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.commandObj.cls.name}-${ctx.commandObj.command.name} arg: ${index}} - No transformer specified!`)
+            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.commandObj.cls.name}-${getFuncName(ctx.commandObj.command)} arg: ${index}} - No transformer specified!`)
         }
     }
 
