@@ -1,19 +1,13 @@
 import { BaseGlobals, CommandProcessor } from '@/bot/process_command'
-import { Context, getModuleFiles, moduleFolder } from './context'
+import { Context, getModuleFiles } from './context'
+
+const prefix = '/'
 
 async function main() {
-    const globals = new BaseGlobals(
-        "/", // the prefix to call a command!
-
-        // add any other variables you would like to have access across the entire bot,
-        // this is passed to all context and event calls
-        // example, DB instance would be assigned here.
-        // subclass BaseGlobals to add your own vars
-    )
 
     const commandProcessor = new CommandProcessor(
         Context, // pass in Context class here, this is the class that will be instanced for every command
-        globals 
+        new BaseGlobals() 
     )
 
     await commandProcessor.moduleLoader.scheduleEvent(
@@ -29,7 +23,7 @@ async function main() {
 
     // on message call -- process command:
     for await (const line of console) {
-        commandProcessor.processCommands(line)
+        commandProcessor.processCommands(prefix, line)
         // can pass in additional arguments which will be used to instance the Context class!
         // example use-case: name of user, channel etc
     }
