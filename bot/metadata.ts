@@ -18,7 +18,7 @@ export class ArgsMetadata {
     }
 
     public static getArgsMetadata(cls : any, methodName : string) : Array<string> | undefined {
-
+        methodName = getFuncName(methodName)
         if ('prototype' in cls) cls = cls.prototype
 
         return Reflect.getMetadata(
