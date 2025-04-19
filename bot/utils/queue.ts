@@ -59,7 +59,7 @@ export default class Queue<T> {
 
     #wakeupNext(waiters : LinkedList<Future<any>>) { 
         while (waiters.length) {
-            let waiter = waiters.removeAt(0)
+            const waiter = waiters.removeAt(0)
             if (waiter && !waiter.done()) {
                 waiter.resolve(0)
                 break;
@@ -89,7 +89,7 @@ export default class Queue<T> {
 
     async put(item : T) {
         while (this.full()) {
-            let putter = new Future()
+            const putter = new Future()
             this.#putters.append(putter); 
             try {
                 await putter.promise
@@ -119,7 +119,7 @@ export default class Queue<T> {
 
     async get() {
         while (this.empty()) { 
-            let getter = new Future(); 
+            const getter = new Future(); 
             this.#getters.append(getter); 
 
             try {
@@ -141,7 +141,7 @@ export default class Queue<T> {
             throw new Error("Queue Empty!")
         }
 
-        let item = this.#get(); 
+        const item = this.#get(); 
         this.#wakeupNext(this.#putters); 
         return item; 
     }

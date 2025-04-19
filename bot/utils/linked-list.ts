@@ -23,11 +23,11 @@ export default class LinkedList<T> {
     }
 
     insertAt(item: T, idx: number): void {
-        let node = this.getNode(idx); 
+        const node = this.getNode(idx); 
 
         if (!node) return;
 
-        let newNode = new Node(item, node, node.next);
+        const newNode = new Node(item, node, node.next);
         if (node.next)
             node.next.prev = newNode; 
 
@@ -66,14 +66,14 @@ export default class LinkedList<T> {
         
     }
     get(idx: number): T | undefined {
-        let node = this.getNode(idx); 
+        const node = this.getNode(idx); 
         if (!node) return undefined; 
         
         return node.item;
     }
     
     removeAt(idx: number): T | undefined {
-        let node = this.getNode(idx); 
+        const node = this.getNode(idx); 
 
         if (!node) return undefined; 
         return this.removeNode(idx, node)
@@ -93,6 +93,72 @@ export default class LinkedList<T> {
 
         return this.removeNode(i, node)
 
+    }
+
+    *iterate(
+        option : {
+            /** reverse the flow of the iterator */
+            reverse : boolean
+        } = { 
+            reverse : false 
+        }
+    ) { 
+        let node : Node<T> | undefined
+
+        if (option.reverse) 
+            node = this.tail
+        else node = this.head
+
+        while (true) {
+            if (!node) break
+
+            const current = node
+
+            if (option.reverse) node = node.prev
+            else node = node.next
+
+            yield current.item
+        }
+    }
+
+    entries(entriesOption? : { reverse : false }) : Generator<[number, T]>
+    entries(entriesOption : { reverse : true, relative? : boolean }) : Generator<[number, T]>
+    *entries(entriesOption : EntriesOption = {}) : Generator<[number, T]> { 
+
+        const defaultOption : Required<EntriesOption> = { 
+            reverse : false,
+            relative : false
+        } 
+
+        const option = {...defaultOption, ...entriesOption}
+
+        let node : Node<T> | undefined
+        let count = -1
+
+        if (option.reverse) {
+            node = this.tail
+            if (option.relative)
+                count = this.length
+        } else node = this.head
+
+        while (true) {
+            if (!node) break
+
+            const current = node
+
+            if (option.reverse) node = node.prev
+            else node = node.next
+
+            if (option.reverse && option.relative)
+                count--
+            else count++
+
+            yield [count, current.item]
+        }
+    }
+
+    [Symbol.iterator]() { 
+        return this.iterate()
     }
 
     private getNode(index : number) : Node<T> | undefined { 
@@ -151,3 +217,11 @@ class Node<T> {
         this.next = next; 
     }
 }
+
+
+type EntriesOption = Partial<{
+    /** reverse the flow of the iterator, default : false */
+    reverse? : boolean,
+    /** use relative index if reversed, default : false */
+    relative? : boolean
+}>
