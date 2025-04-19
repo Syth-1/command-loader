@@ -72,7 +72,7 @@ export class DescMetadata {
 
         const description = Reflect.getMetadata(
             DescMetadata.DescMetadataKey, 
-            cls.prototype, 
+            cls, 
             methodName
         )
 
