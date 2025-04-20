@@ -26,7 +26,7 @@ import {
 
 interface commandName { 
     name? : string, 
-    alias? : NonEmptyArray<string>
+    alias? : NonEmptyArray<string> | string
 }
 
 type parentArg = AtLeastOne<parent>
@@ -47,7 +47,9 @@ export class Commands {
                 commandName = commandInfo
             } else {
                 commandName = commandInfo.name || methodName
-                alias = commandInfo.alias || []
+
+                if (typeof commandInfo.alias === 'string') alias = [commandInfo.alias]
+                else alias = commandInfo.alias || []
             }
 
             const argsInfo = ArgsMetadata.getParamMetadata(
