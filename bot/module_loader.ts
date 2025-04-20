@@ -354,14 +354,21 @@ export class ModuleLoader {
     }
 
     private addCommands(commandsToAdd : CommandMap, commandCollection : CommandsCollection, moduleTreeCommandList : Array<string>, cls : Class) { 
+        // keep same ref across alias'
+        const funcBindMap : Map<CommandFunction, CommandFunction> = new Map()
+
         for (const [command, func] of Object.entries(commandsToAdd)) { 
             if (commandCollection.hasOwnProperty(command)) {
                 throw Error(`command '${command}' already exists!`)
             }
 
+            if (!funcBindMap.has(func)) { 
+                funcBindMap.set(func, func.bind(cls))
+            }
+
             commandCollection[command] = {
                 cls : cls, 
-                command : func.bind(cls)
+                command : funcBindMap.get(func)!
             }
             moduleTreeCommandList.push(command)
         }
