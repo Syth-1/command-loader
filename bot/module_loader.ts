@@ -354,7 +354,7 @@ export class ModuleLoader {
     }
 
     private addCommands(commandsToAdd : CommandMap, commandCollection : CommandsCollection, moduleTreeCommandList : Array<string>, cls : Class) { 
-        // keep same ref across alias'
+        // keep same ref across command alias'
         const funcBindMap : Map<CommandFunction, CommandFunction> = new Map()
 
         for (const [command, func] of Object.entries(commandsToAdd)) { 
