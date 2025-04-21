@@ -18,7 +18,11 @@ export class CommandProcessor<
     private contextCls : T
     
 
-    constructor(contextCls : T, globals : U) { 
+    constructor(contextCls : T, globals : U | (new () => U)) { 
+        if (!(globals instanceof BaseGlobals)) { 
+            globals = new globals()
+        }
+
         this.moduleLoader = new ModuleLoader(globals)
         this.contextCls = contextCls
         

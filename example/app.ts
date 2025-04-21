@@ -7,7 +7,7 @@ async function main() {
 
     const commandProcessor = new CommandProcessor(
         Context, // pass in Context class here, this is the class that will be instanced for every command
-        new BaseGlobals() 
+        BaseGlobals 
     )
 
     await commandProcessor.moduleLoader.scheduleEvent(
