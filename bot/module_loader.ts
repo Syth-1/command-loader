@@ -114,7 +114,7 @@ export class ModuleLoader {
             // load intervals
             const intervalsObj = buffers.IntervalBuffer.read(cls) ?? {}
             Object.values(intervalsObj).forEach(val => val.func = val.func.bind(instancedCls))
-            Object.assign(intervalsObj)
+            Object.assign(intervals, intervalsObj)
 
             // load commands
             const commandsMap = buffers.CommandBuffer.read(cls) || {}
