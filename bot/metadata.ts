@@ -78,6 +78,10 @@ export class DescMetadata {
 
         if (description) return description
             
+        return this.getDescMetadataFromCls(cls)
+    }
+
+    public static getDescMetadataFromCls(cls : any) : string {
         return Reflect.getMetadata(
             DescMetadata.DescMetadataKey, 
             cls, 
