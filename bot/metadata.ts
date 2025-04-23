@@ -67,7 +67,7 @@ export class DescMetadata {
     private static readonly DescMetadataKey = Symbol('__CommandDescription__')
 
 
-    public static getDescMetadata(cls : any, methodName : string) : string {
+    public static getDescMetadata(cls : any, methodName : string) : string | undefined {
         methodName = getFuncName(methodName)
 
         const description = Reflect.getMetadata(
@@ -81,7 +81,7 @@ export class DescMetadata {
         return this.getDescMetadataFromCls(cls)
     }
 
-    public static getDescMetadataFromCls(cls : any) : string {
+    public static getDescMetadataFromCls(cls : any) : string | undefined {
         return Reflect.getMetadata(
             DescMetadata.DescMetadataKey, 
             cls, 
