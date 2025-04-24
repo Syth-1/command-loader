@@ -4,7 +4,6 @@ export class ArgsMetadata {
     private static readonly ArgsMetadataKey = Symbol('__argsNames__')
 
     public static getParamMetadata(cls : any, methodName : string) : Array<reflectTypes> {
-
         methodName = getFuncName(methodName)
         if ('prototype' in cls) cls = cls.prototype
 

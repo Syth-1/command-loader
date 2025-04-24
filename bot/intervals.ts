@@ -1,21 +1,46 @@
-
+export type UtcTime = {
+    hours: number;
+    minutes: number;
+    seconds?: number;
+};
 
 export class IntervalHandler {
     lastRefresh = Date.now();
     abortController = new ReusableAbortController()
+    private interval!: number
+    private utcTime?: UtcTime;
 
-
-    constructor(private cls : Class, public func : IntervalFunction, private interval : number, private globals : Globals) {
-        this.execute()
+    constructor(private cls : Class, public func : IntervalFunction, interval : number | string, private globals : Globals) {
         this.reload(func, interval)
     }
 
-    reload(func : IntervalFunction, interval : number) { 
-        this.interval = interval
+    reload(func : IntervalFunction, interval : number | string) { 
         this.abortController.abortAndReset()
         this.func = func
 
-        const delay = (Date.now() + this.interval) - this.lastRefresh
+        if (typeof interval === 'number') {
+            return this.schedule(interval)
+        }
+
+        const parts = interval.split(':').map(Number)
+
+        this.utcTime = {
+            hours : parts[0],
+            minutes : parts[1],
+            seconds : parts[2] ?? 0,
+        }
+
+        this.scheduleNextUtcExecution();
+    }
+
+    stop() { 
+        this.abortController.abortAndReset()
+    }
+
+    private schedule(interval : number) { 
+        this.interval = interval
+
+        const delay = (this.lastRefresh + this.interval) - Date.now()
 
         setAbortableTimeout(() => {
             this.lastRefresh = Date.now()
@@ -29,10 +54,44 @@ export class IntervalHandler {
         }, delay, this.abortController.signal);
     }
 
-    stop() { 
-        this.abortController.abortAndReset()
-    }
 
+    private scheduleNextUtcExecution() {
+        const nextExecutionTime = this.calculateNextUtcExecutionTime();
+        const delay = nextExecutionTime.getTime() - Date.now();
+
+        setAbortableTimeout(() => {
+          this.lastRefresh = Date.now();
+          this.execute();
+          // Schedule the next day's execution
+          this.scheduleNextUtcExecution();
+        }, delay, this.abortController.signal);
+      }
+    
+      private calculateNextUtcExecutionTime(): Date {
+        if (!this.utcTime) {
+          throw new Error("UTC time is not defined");
+        }
+    
+        const now = new Date();
+        const targetTime = new Date(
+          Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+            this.utcTime.hours,
+            this.utcTime.minutes,
+            this.utcTime.seconds || 0
+          )
+        );
+    
+        // If the time has already passed today, schedule for tomorrow
+        if (targetTime.getTime() <= now.getTime()) {
+          targetTime.setUTCDate(targetTime.getUTCDate() + 1);
+        }
+    
+        return targetTime;
+      }
+    
     private execute() { 
         this.globals.commandProcessor.tryExecuteFunction(
             this.cls, 
