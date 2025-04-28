@@ -97,7 +97,7 @@ class CheckBuffer implements BufferClass {
 class IntervalBuffer implements BufferClass {
     readonly varName = "__intervalBuffer__"
 
-    add(cls : typedCls, func : Function, interval : number) { 
+    add(cls : typedCls, func : Function, interval : number | string) { 
 
         if (cls[this.varName] === undefined)
             cls[this.varName] = {}

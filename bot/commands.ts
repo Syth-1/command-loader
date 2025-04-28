@@ -137,7 +137,7 @@ export class Commands {
         buffers.CheckBuffer.add(methodClass, descriptor.value)
     }
 
-    static interval(interval : number) {
+    static interval(interval : number | string) {
         return (methodClass : any, methodName : string, descriptor : PropertyDescriptor) => { 
             buffers.IntervalBuffer.add(methodClass, descriptor.value, interval)
         }

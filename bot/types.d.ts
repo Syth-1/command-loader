@@ -79,7 +79,7 @@ declare global {
     interface ModuleInterval { 
         [key : string] : {
             func : IntervalFunction,
-            interval : number,
+            interval : number | string,
             cls : Class
         }
     }
