@@ -83,7 +83,8 @@ export class Commands {
                     if (typeof localCheck === 'boolean' && !localCheck)  return
                 }
 
-                return childFunction(ctx, ...validatedArgs);
+                // propogate 'this'!
+                return childFunction.call(this, ctx, ...validatedArgs);
             }
 
             ArgsMetadata.setArgsMetadata(
