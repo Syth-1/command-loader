@@ -59,8 +59,6 @@ async function main() {
             listenerTestVal
         )
 
-        console.log({index}, listenerTestVal.runs)
-
         if (listenerTestVal.runs < index + 1) { 
             throw Error(`did not run listener ${textDict[text]}`)
         } else if (listenerTestVal.runs > index + 1) { 
@@ -97,7 +95,6 @@ async function main() {
     for (const command of commands) { 
         await commandProcessor.processCommands(prefix, join(command, 'foo bar'), future, testVals)
         
-        console.log(future.done())
         if (future.done()) return false
 
         if (testVals.runs === runCount) throw Error(`Didnt run '${command}' check!`)

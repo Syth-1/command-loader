@@ -9,8 +9,6 @@ export class Test {
     async messageListener(ctx: Context) { 
         ctx.testVals.runs++
 
-        console.log(ctx.msg)
-
         return ctx.msg !== 'listener foo'
     }
 
