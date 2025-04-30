@@ -84,7 +84,7 @@ export class Commands {
                 }
 
                 // propogate 'this'!
-                return childFunction.call(this, ctx, ...validatedArgs);
+                return await childFunction.call(this, ctx, ...validatedArgs);
             }
 
             ArgsMetadata.setArgsMetadata(
@@ -183,14 +183,62 @@ export class Listener {
     }
 }
 
+
 export interface Module {
-    onLoad?(globals : BaseGlobals) : Promise<void>
-    onUnload?(globals : BaseGlobals) : Promise<void>
-    onError? : errorFunction
-    onCommand?(ctx : BaseContext) : Promise<void | string | boolean>
-    onMessage?(ctx : BaseContext) : Promise<void | string | boolean>
-    onExecute?(ctx : BaseContext) : Promise<void | string | boolean>
+    /**
+     * Called when the module is loaded.
+     * @param globals - The global context or state for the application.
+     * @returns A promise that resolves when loading is complete.
+     */
+    onLoad?(globals: BaseGlobals): Promise<any>;
+
+    /**
+     * Called when the module is unloaded.
+     * @param globals - The global context or state for the application.
+     * @returns A promise that resolves when unloading is complete.
+     */
+    onUnload?(globals: BaseGlobals): Promise<any>;
+
+    /**
+     * Called when an error occurs.
+     * @param err - The error object.
+     * @param ctx - Additional error context.
+     * @returns A promise that resolves when error handling is complete.
+     */
+    onError?(err: Error, ctx: errorObject): Promise<any>;
+
+    /**
+     * Called when a command is processed.
+     * 
+     * - If `false` is returned:
+     *   - Further processing of the command will be stopped.
+     * - If a string is returned:
+     *   - The string will replace the current content (e.g., message or output).
+     * - Any other return value (including `true`) will be ignored and processing continues.
+     * 
+     * @param ctx - The context for the command.
+     * @returns A promise resolving to a string (to replace content), 
+     *          `false` (to stop processing), or any other value (ignored).
+     */
+    onCommand?(ctx: BaseContext): Promise<string | false | any>;
+
+    /**
+     * Called when an execution event occurs.
+     * 
+     * - If `false` is returned:
+     *   - Further processing of the execution will be stopped.
+     * - If a string is returned:
+     *   - The string will replace the current content (e.g., message or output).
+     * - Any other return value (including `true`) will be ignored and processing continues.
+     * 
+     * @param ctx - The context for the execution.
+     * @returns A promise resolving to a string (to replace content), 
+     *          `false` (to stop processing), or any other value (ignored).
+     */
+    onExecute?(ctx: BaseContext): Promise<string | false | any>;
 }
+
+
 
 function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
 

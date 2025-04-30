@@ -2,14 +2,19 @@
   "name": "command-loader",
   "module": "app.ts",
   "type": "module",
+  "scripts": {
+    "test": "bun test tests/*-test/*.test.ts",
+    "generate-test": "bun run tests/generate-test.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.2.11",
+    "@types/node": "^22.15.3",
+    "@types/lodash": "^4.17.4"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/lodash": "^4.17.4",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.2.2"
   }

@@ -122,7 +122,7 @@ export class CommandProcessor<
             }
         }
 
-        this.tryExecuteCommand(func.cls, func.command, context, context.content)
+        await this.tryExecuteCommand(func.cls, func.command, context, context.content)
     }
 
     
