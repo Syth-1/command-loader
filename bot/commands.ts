@@ -44,7 +44,8 @@ export class Commands {
             if (commandInfo === undefined || commandInfo === null) {
                 commandName = methodName;
             } else if (typeof commandInfo === "string") {
-                commandName = commandInfo
+                commandName = methodName
+                alias = [ commandInfo ]
             } else if (Array.isArray(commandInfo)) { 
                 commandName = methodName
                 alias = commandInfo
