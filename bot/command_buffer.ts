@@ -21,7 +21,7 @@ class CommandBuffer implements BufferClass {
 
     add(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
 
-        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${getFuncName(func)} - existing func: ${getFuncName(cls[this.varName]?.[name].name)} in class : ${cls.name || cls.constructor.name})`) 
+        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${getFuncName(func)} - problem func: ${getFuncName(cls[this.varName]?.[name]?.name || `"${name}"`)} in class : "${cls.name || cls.constructor.name}")`)
 
 
         if (cls[this.varName] === undefined)
@@ -32,7 +32,7 @@ class CommandBuffer implements BufferClass {
         commandName.forEach((name) => {
             name = name.toLowerCase();
 
-            if (name === "" || /\s/.test(name)) throw error(name, "contains an empty string!")
+            if (name === "" || /\s/.test(name)) throw error(name, "contains an empty string/whitespace!")
             if (commandsObj.hasOwnProperty(name)) throw error(name, "already exists!")
 
             commandsObj[name] = func
