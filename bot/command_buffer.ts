@@ -21,7 +21,7 @@ class CommandBuffer implements BufferClass {
 
     add(commandName : Array<string>, cls : typedCls, func : CommandFunction) {
 
-        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${getFuncName(func)} - existing func: ${getFuncName(cls[this.varName]?.[name].name)} in class : ${cls.name})`) 
+        const error = (name : string, error : string) => Error(`Command "${name}" ${error} (func: ${getFuncName(func)} - existing func: ${getFuncName(cls[this.varName]?.[name].name)} in class : ${cls.name || cls.constructor.name})`) 
 
 
         if (cls[this.varName] === undefined)
