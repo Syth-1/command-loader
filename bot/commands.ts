@@ -35,7 +35,7 @@ type Class = { new(...args: any[]): any; };
 
 export class Commands {
 
-    static command(commandInfo? : commandName | string | null, ...rest : Array<undefined | null | BaseTransformer<any>>) {
+    static command(commandInfo? : commandName | string | Array<string> | null, ...rest : Array<undefined | null | BaseTransformer<any>>) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
 
             let commandName : string
@@ -45,6 +45,9 @@ export class Commands {
                 commandName = methodName;
             } else if (typeof commandInfo === "string") {
                 commandName = commandInfo
+            } else if (Array.isArray(commandInfo)) { 
+                commandName = methodName
+                alias = commandInfo
             } else {
                 commandName = commandInfo.name || methodName
 
