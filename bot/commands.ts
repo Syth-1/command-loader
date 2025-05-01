@@ -45,10 +45,17 @@ export class Commands {
                 commandName = methodName;
             } else if (typeof commandInfo === "string") {
                 commandName = methodName
-                alias = [ commandInfo ]
+
+                if (commandInfo !== methodName)
+                    alias = [ commandInfo ]
+
             } else if (Array.isArray(commandInfo)) { 
                 commandName = methodName
-                alias = commandInfo
+                // ensure we dont have duplicates
+                const aliasSet = new Set(commandInfo)
+                aliasSet.delete(methodName)
+
+                alias = [...aliasSet]
             } else {
                 commandName = commandInfo.name || methodName
 
