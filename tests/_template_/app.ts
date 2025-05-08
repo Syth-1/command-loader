@@ -3,7 +3,7 @@ import { getModuleFiles } from '@/file'
 import { Context } from '@/test-context';
 import { expect, test } from "bun:test";
 import Future from '@/utils/future';
-import { withTimeout } from '@/test';
+import { withTimeout } from '@/test-utils';
 
 const prefix = ''
 const moduleFolder = 'modules' // folder where command files are located
