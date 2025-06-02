@@ -23,6 +23,9 @@ export class IntervalHandler {
             return this.schedule(interval)
         }
 
+        // clear array first
+        this.utcTimes.length = 0
+
         if (typeof interval === 'string')
             interval = [interval]
 
