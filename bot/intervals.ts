@@ -37,7 +37,8 @@ export class IntervalHandler {
                 minutes: parts[1],
                 seconds: parts[2] ?? 0,
             })
-    }
+        }
+        
         this.scheduleNextUtcExecution();
     }
 
