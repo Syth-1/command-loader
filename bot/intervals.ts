@@ -11,7 +11,11 @@ export class IntervalHandler {
     private utcTimes: Array<UtcTime> = []
 
 
-    constructor(private cls: Class, public func: IntervalFunction, interval: number | string | Array<string>, private globals: Globals) {
+    constructor(
+        private cls: Class, 
+        public func: IntervalFunction, interval: number | string | Array<string>, 
+        private globals: Globals
+    ) {
         this.reload(func, interval)
     }
 
@@ -38,7 +42,7 @@ export class IntervalHandler {
                 seconds: parts[2] ?? 0,
             })
         }
-        
+
         this.scheduleNextUtcExecution();
     }
 
