@@ -8,14 +8,14 @@ export class IntervalHandler {
     lastRefresh = Date.now();
     abortController = new ReusableAbortController()
     private interval!: number
-    private utcTime?: UtcTime;
+    private utcTimes: Array<UtcTime> = []
 
 
-    constructor(private cls: Class, public func: IntervalFunction, interval: number | string, private globals: Globals) {
+    constructor(private cls: Class, public func: IntervalFunction, interval: number | string | Array<string>, private globals: Globals) {
         this.reload(func, interval)
     }
 
-    reload(func: IntervalFunction, interval: number | string) {
+    reload(func: IntervalFunction, interval: number | string | Array<string>) {
         this.abortController.abortAndReset()
         this.func = func
 
@@ -23,14 +23,18 @@ export class IntervalHandler {
             return this.schedule(interval)
         }
 
-        const parts = interval.split(':').map(Number)
+        if (typeof interval === 'string')
+            interval = [interval]
 
-        this.utcTime = {
-            hours: parts[0],
-            minutes: parts[1],
-            seconds: parts[2] ?? 0,
-        }
+        for (const item of interval) {
+            const parts = item.split(':').map(Number)
 
+            this.utcTimes.push({
+                hours: parts[0],
+                minutes: parts[1],
+                seconds: parts[2] ?? 0,
+            })
+    }
         this.scheduleNextUtcExecution();
     }
 
@@ -56,8 +60,17 @@ export class IntervalHandler {
     }
 
     private scheduleNextUtcExecution() {
-        const nextExecutionTime = this.calculateNextUtcExecutionTime();
-        const delay = nextExecutionTime.getTime() - Date.now();
+
+        let delay = Infinity
+
+        for (const utcTime of this.utcTimes) {
+            const nextExecutionTime = this.calculateNextUtcExecutionTime(utcTime);
+            const currentDelay = nextExecutionTime.getTime() - Date.now();
+
+            if (currentDelay < delay) {
+                delay = currentDelay
+            }
+        }
 
         setAbortableTimeout(() => {
             this.lastRefresh = Date.now();
@@ -67,8 +80,8 @@ export class IntervalHandler {
         }, delay, this.abortController.signal);
     }
 
-    private calculateNextUtcExecutionTime(): Date {
-        if (!this.utcTime) {
+    private calculateNextUtcExecutionTime(utcTime : UtcTime): Date {
+        if (!this.utcTimes || this.utcTimes.length < 1) {
             throw new Error("UTC time is not defined");
         }
 
@@ -78,9 +91,9 @@ export class IntervalHandler {
                 now.getUTCFullYear(),
                 now.getUTCMonth(),
                 now.getUTCDate(),
-                this.utcTime.hours,
-                this.utcTime.minutes,
-                this.utcTime.seconds || 0
+                utcTime.hours,
+                utcTime.minutes,
+                utcTime.seconds || 0
             )
         );
 
