@@ -120,13 +120,12 @@ export class ModuleLoader {
             const commandsMap = buffers.CommandBuffer.read(cls) || {}
             const checkMap = buffers.CheckBuffer.read(cls) || []
             
-            // so we dont process empty objects, if it only loaded events
-            if (Object.entries(commandsMap).length !== 0 || checkMap.length !== 0) {
-                commandsBufferMap.set(instancedCls, {
-                    commands : commandsMap,
-                    check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
-                })
-            }
+            // add empty objects as they may contain load and unload!
+            commandsBufferMap.set(instancedCls, {
+                commands : commandsMap,
+                check : Object.fromEntries(checkMap.map(checkFunc => [checkFunc.name, checkFunc]))
+            })
+            
         
             clearCache(cls)
         }
