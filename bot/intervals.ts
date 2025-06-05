@@ -13,7 +13,8 @@ export class IntervalHandler {
 
     constructor(
         private cls: Class, 
-        public func: IntervalFunction, interval: number | string | Array<string>, 
+        public func: IntervalFunction, 
+        interval: number | string | Array<string>, 
         private globals: Globals
     ) {
         this.reload(func, interval)
