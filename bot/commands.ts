@@ -249,7 +249,7 @@ export interface Module {
     onExecute?(ctx: BaseContext): Promise<string | false | any>;
 }
 
-interface Submodule extends Module { 
+export interface Submodule extends Module { 
     /**
      * Called when a subcommand is not found under a parent command.
      * 
