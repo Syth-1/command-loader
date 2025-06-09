@@ -51,6 +51,18 @@ export class StringParser{
         return arg
     }
 
+    peekArg(quoted: boolean = true): string {
+        const savedInternalString = this.internalString
+        
+        try {
+            return this.getArg(quoted)
+        } catch (error) {
+            throw error
+        } finally { 
+            this.internalString = savedInternalString
+        }
+    }
+
     getRestOfString() {
         const restOfString = this.internalString.trim()
 

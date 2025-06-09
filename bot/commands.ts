@@ -77,7 +77,7 @@ export class Commands {
             const childFunction : CommandFunction = descriptor.value;
 
             descriptor.value = async function (ctx : Context, args : string) {
-                const validatedArgs = validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)
+                const validatedArgs = await validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)
 
                 if (validatedArgs === undefined) return; 
 
@@ -251,7 +251,7 @@ export interface Module {
 
 
 
-function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
+async function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
 
     if (argsRequired < 0) { 
         throw Error("Invalid Number of Arguments, is Argument for CTX provided?")
@@ -265,7 +265,7 @@ function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectType
 
         try { 
             convertedArgs.push(
-                checkArgs(ctx, stringParser, argInfo, constraint, index)
+                await checkArgs(ctx, stringParser, argInfo, constraint, index)
             )
         } catch (error) { 
 
@@ -294,10 +294,10 @@ function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectType
 }
 
 
-function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflectTypes, constraint : BaseTransformer<any> | null | undefined, index : number) { 
+async function checkArgs(ctx : Context, stringParser : StringParser, argInfo : reflectTypes, constraint : BaseTransformer<any> | null | undefined, index : number) { 
     
     if (constraint !== null && typeof constraint === 'object' && constraint['handleConstraint'] !== undefined) {
-        return constraint.handleConstraint(ctx, stringParser)
+        return await constraint.handleConstraint(ctx, stringParser)
     }
 
     let transformer : (ctx: Context, stringParser: StringParser) => any;
