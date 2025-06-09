@@ -249,7 +249,42 @@ export interface Module {
     onExecute?(ctx: BaseContext): Promise<string | false | any>;
 }
 
+export interface Submodule extends Module { 
+    /**
+     * Called when a subcommand is not found under a parent command.
+     * 
+     * **Note:** This function is only available if the command is a parent command.
+     * If used on a non-parent command, this function will do nothing.
+     * 
+     * - If `false` is returned:
+     *   - Further processing will be stopped.
+     * - If a string is returned:
+     *   - The string will replace the current content (e.g., message or output).
+     * - Any other return value (including `true`) will be ignored and processing continues.
+     * 
+     * @param ctx - The context for the command.
+     * @returns A promise that returns anything.
+     */
+    onCommandNotFound?(ctx: BaseContext): Promise<any>;
 
+    /**
+     * Called when a parent command is invoked without specifying a subcommand.
+     * 
+     * **Note:** This function is only available if the command is a parent command.
+     * If used on a non-parent command, this function will do nothing.
+     * 
+     * - If `false` is returned:
+     *   - Further processing will be stopped.
+     * - If a string is returned:
+     *   - The string will replace the current content (e.g., message or output).
+     * - Any other return value (including `true`) will be ignored and processing continues.
+     * 
+     * @param ctx - The context for the command.
+     * @returns A promise that returns anything.
+
+     */
+    onDefaultCommand?(ctx: BaseContext): Promise<any>;
+}
 
 async function validateArgs(ctx : Context, args : string, argsInfo : Array<reflectTypes>, constraints : Array<undefined | null | BaseTransformer<any>>, argsRequired : number) {
 

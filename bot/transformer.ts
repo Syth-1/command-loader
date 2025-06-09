@@ -48,10 +48,12 @@ export class NumberTransformer implements BaseTransformer<number>, Complete<numb
 
     min : number | undefined
     max : number | undefined
+    error : boolean
 
-    constructor(min? : number, max? : number) {
+    constructor(min? : number, max? : number, error : boolean = true) {
         this.min = min
-        this.max = max
+        this.max = max,
+        this.error = error
     }
 
     handleConstraint(ctx: Context, stringParser: StringParser) {
@@ -65,10 +67,24 @@ export class NumberTransformer implements BaseTransformer<number>, Complete<numb
         }
 
         if (this.min) {
+            if (this.error && number < this.min)
+                throw new CommandError.NumberBoundsError(
+                    'min',
+                    this.min,
+                    number
+                ) 
+
             number = Math.max(number, this.min)
         }
 
         if (this.max) {
+            if (this.error && number > this.max)
+                throw new CommandError.NumberBoundsError(
+                    'max',
+                    this.max,
+                    number
+                )
+
             number = Math.min(number, this.max)
         }
 
