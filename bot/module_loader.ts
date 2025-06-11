@@ -136,7 +136,8 @@ export class ModuleLoader {
 
     purgeImportCache() { 
         for (const [file, module] of Object.entries(require.cache)) {
-            if (checkSkipImport(file) || (module !== undefined && module.exports[cacheFlag] === true)) continue
+            if (!module) continue
+            if (checkSkipImport(file) || module.exports?.[cacheFlag] === true) continue
         
             delete require.cache[file]
         }
