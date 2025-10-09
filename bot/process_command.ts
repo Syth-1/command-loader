@@ -174,7 +174,7 @@ export class CommandProcessor<
     
     async tryExecuteFunction(cls : Class, func : Function, globals : Globals, ...args : any) { 
         try {
-            return await func.bind(cls)(...args, globals, ...args)
+            return await func.bind(cls)(globals, ...args)
         } catch (e) {
             if (!(e instanceof Error)) {
                 e = new Error(e as any)
