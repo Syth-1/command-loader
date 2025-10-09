@@ -155,7 +155,13 @@ export class ModuleLoader {
 
                 for (const cls of moduleTree.class) {
                     const loadFunc = getFunctionFromCls(cls, "onLoad")
-                    loadFunc?.(this.globals)
+                    if (loadFunc) {
+                        this.globals.commandProcessor.tryExecuteFunction(
+                            cls, 
+                            loadFunc, 
+                            this.globals
+                        )
+                    }
                 }
 
                 await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
