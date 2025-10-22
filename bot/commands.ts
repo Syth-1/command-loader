@@ -6,10 +6,6 @@ import {
     StringParser,
     CommandError,
 
-    standardStringTransformer,
-    standardNumberTransformer,
-    standardBooleanTransformer,
-
     parentVarName,
     EventNames,
 
@@ -335,28 +331,9 @@ async function checkArgs(ctx : Context, stringParser : StringParser, argInfo : r
         return await constraint.handleConstraint(ctx, stringParser)
     }
 
-    let transformer : (ctx: Context, stringParser: StringParser) => any;
-
-    switch (argInfo) {
-        case "String": { 
-            transformer = standardStringTransformer
-            break
-        }
-
-        case "Number": {
-            transformer = standardNumberTransformer
-            break; 
-        }
-
-        case "Boolean": {
-            transformer = standardBooleanTransformer
-            break;
-        }
-
-        default : { // we check if object has transformer and handle it accordingly first!
-            throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.commandObj.cls.name}-${getFuncName(ctx.commandObj.command)} arg: ${index}} - No transformer specified!`)
-        }
+    if (ctx.globals.commandProcessor.transformerRegistry.has(argInfo)) {
+        return await ctx.globals.commandProcessor.transformerRegistry.get(argInfo)!.func(ctx, stringParser)
     }
 
-    return transformer(ctx, stringParser)
+    throw new CommandError.ObjectArgError(`Cant handle type ${argInfo} {${ctx.commandObj.cls.name}-${getFuncName(ctx.commandObj.command)} arg: ${index}} - No transformer specified!`)
 }
