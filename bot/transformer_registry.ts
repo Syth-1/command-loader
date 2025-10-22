@@ -13,9 +13,9 @@ export interface TransformerRegistry {
 }
 
 const baseRegistry : TransformerRegistry = {
-    String : { name : "string", func : standardStringTransformer },
-    Number : { name : "number", func : standardNumberTransformer },
-    Boolean : { name : "boolean", func : standardBooleanTransformer }
+    String : { name : "Text", func : standardStringTransformer },
+    Number : { name : "Number", func : standardNumberTransformer },
+    Boolean : { name : "True/False", func : standardBooleanTransformer }
 }
 
 export const getBaseTransformer = () => { return {...baseRegistry} }
