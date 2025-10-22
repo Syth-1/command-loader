@@ -3,10 +3,12 @@ import {
     ModuleLoader, 
     StringParser, 
     getFunctionFromCls, 
+    getBaseTransformer,
+    type TransformerRegistry,
     type EventRequiresCTX, 
     type EventRequiresGlobal 
 } from "./internals";
-import { getBaseTransformer, type TransformerRegistry } from "./transformer_registry";
+
 import { getFuncName } from "./utils/func-name";
 
 export class CommandProcessor<
@@ -14,14 +16,20 @@ export class CommandProcessor<
     U extends BaseGlobals
 >
 { 
-    readonly transformerRegistry = new Map<string, TransformerRegistry[string]>(Object.entries(getBaseTransformer()))
+    readonly transformerRegistry = new Map<string, TransformerRegistry[string]>(
+        Object.entries(getBaseTransformer())
+    )
     
     readonly moduleLoader : ModuleLoader
     readonly globals : U
     private contextCls : T
     
 
-    constructor(contextCls : T, globals : U | (new () => U), transformerRegistry : {[name : string] : TransformerRegistry[string]} = {}) {
+    constructor(
+        contextCls : T, 
+        globals : U | (new () => U), 
+        transformerRegistry : {[name : string] : TransformerRegistry[string]} = {}
+    ) {
     
         for (const [key, value] of Object.entries(transformerRegistry)) {
             this.transformerRegistry.set(key, value);
@@ -40,7 +48,11 @@ export class CommandProcessor<
         this.globals = globals
     }
 
-    async processCommands(prefix : string | RegExp | Array<string | RegExp>, msg : string, ...args : ConstructorParameters<T>) {
+    async processCommands(
+        prefix : string | RegExp | Array<string | RegExp>, 
+        msg : string, 
+        ...args : ConstructorParameters<T>
+    ) {
         msg = msg.trim();
         
         const context = new this.contextCls(...args)
@@ -134,7 +146,12 @@ export class CommandProcessor<
     }
 
     
-    private async tryGetSubCommand(commandObj :  Commands | NestedCommandObj, commandParser : StringParser, ctx : Context, commandName : string) {
+    private async tryGetSubCommand(
+        commandObj :  Commands | NestedCommandObj, 
+        commandParser : StringParser, 
+        ctx : Context, 
+        commandName : string
+    ) {
         const parent = []
         let lastCommandName = commandName
         while (true) {
@@ -253,7 +270,10 @@ export class CommandProcessor<
     }
 
 
-    async callEvent<TEventName extends typeof EventNames[keyof typeof EventNames] | string & {}>(event : TEventName, ...args : EventParams<TEventName> ) { 
+    async callEvent<TEventName extends typeof EventNames[keyof typeof EventNames] | string & {}>(
+        event : TEventName, 
+        ...args : EventParams<TEventName>
+    ) { 
         for (const [file, moduleEvents] of Object.entries(this.moduleLoader.eventListener)) {
             const funcArr = moduleEvents[event]
             if (funcArr === undefined) continue

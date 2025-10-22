@@ -1,4 +1,9 @@
-import { standardBooleanTransformer, standardNumberTransformer, standardStringTransformer, type BaseTransformer } from "./internals";
+import { 
+    standardBooleanTransformer, 
+    standardNumberTransformer, 
+    standardStringTransformer, 
+    type BaseTransformer 
+} from "./internals";
 
 export interface TransformerRegistry {
     [key: string]: {
