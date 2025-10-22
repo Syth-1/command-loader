@@ -6,7 +6,7 @@ import {
     type EventRequiresCTX, 
     type EventRequiresGlobal 
 } from "./internals";
-import { getBaseTransformer, type TrasnformerRegistry } from "./transformer_registry";
+import { getBaseTransformer, type TransformerRegistry } from "./transformer_registry";
 import { getFuncName } from "./utils/func-name";
 
 export class CommandProcessor<
@@ -14,14 +14,14 @@ export class CommandProcessor<
     U extends BaseGlobals
 >
 { 
-    readonly transformerRegistry = new Map<string, TrasnformerRegistry[string]>(Object.entries(getBaseTransformer()))
+    readonly transformerRegistry = new Map<string, TransformerRegistry[string]>(Object.entries(getBaseTransformer()))
     
     readonly moduleLoader : ModuleLoader
     readonly globals : U
     private contextCls : T
     
 
-    constructor(contextCls : T, globals : U | (new () => U), transformerRegistry : {[name : string] : TrasnformerRegistry[string]} = {}) {
+    constructor(contextCls : T, globals : U | (new () => U), transformerRegistry : {[name : string] : TransformerRegistry[string]} = {}) {
     
         for (const [key, value] of Object.entries(transformerRegistry)) {
             this.transformerRegistry.set(key, value);
