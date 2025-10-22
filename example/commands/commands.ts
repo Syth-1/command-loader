@@ -1,7 +1,7 @@
 
 import { Commands, Listener } from "@/bot/commands"
 import { type Context } from "@/context"
-import { value } from "../script"
+import { StringEx, value } from "../script"
 import { StringTransformer } from "@/bot/transformer"
 
 // dont forget to export a modules class, else it wont be loaded!
@@ -21,11 +21,14 @@ export class TestCommands{
 
     // first argument of the function will always be Context!
     @Commands.command({alias : ["hello", "world"]})
-    test(ctx : Context)  {
+    test(ctx : Context) {
         ctx.sendMessage("hello world")
         ctx.sendMessage(`${value}`)
     }
 
+
+    // parses number automatically!
+    // raises error if it doesnt parse
     @Commands.command()
     test2(ctx : Context, number : number) {
         console.log("^^")
@@ -50,6 +53,12 @@ export class TestCommands{
     @Commands.command({alias : ['ctxInfo']})
     ctx(ctx : Context) { 
         console.log(ctx)
+    }
+
+    // using custom class, where the class is a registered transformer
+    @Commands.command()
+    async long(ctx : Context, text : StringEx) { 
+        console.log(text)
     }
 
     // listeners are global! they are run when ever this event is fired from anywhere in the bot

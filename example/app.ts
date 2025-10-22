@@ -1,5 +1,6 @@
 import { BaseGlobals, CommandProcessor } from '@/bot/process_command'
 import { Context, getModuleFiles } from './context'
+import { stringRegistry } from './script'
 
 const prefix = '/'
 
@@ -7,7 +8,8 @@ async function main() {
 
     const commandProcessor = new CommandProcessor(
         Context, // pass in Context class here, this is the class that will be instanced for every command
-        BaseGlobals 
+        BaseGlobals,
+        { ...stringRegistry }
     )
 
     await commandProcessor.moduleLoader.scheduleEvent(
