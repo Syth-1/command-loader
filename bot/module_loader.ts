@@ -157,7 +157,7 @@ export class ModuleLoader {
         return this.unloadModuleHandler(files)
     }
 
-    async unloadModuleHandler(files : string | Array<string>, reloading : boolean = false) {
+    private async unloadModuleHandler(files : string | Array<string>, reloading : boolean = false) {
         if (typeof files === 'string') files = [files]
 
         const errors : Array<Error> = []
