@@ -217,7 +217,7 @@ export class ModuleLoader {
 
                 await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
 
-                const unloadErrors = await this.unloadModuleHandler([file], true)
+                const unloadErrors = await this.unloadModuleHandler(file, true)
 
                 errors.push(...unloadErrors)
 
@@ -232,6 +232,34 @@ export class ModuleLoader {
             } finally { 
                 this.purgeImportCache()
             }
+        }
+
+        return errors
+    }
+
+
+    async handleReload({addFiles, removeFiles, reloadFiles} : {
+        addFiles? : Array<string>, 
+        removeFiles? : Array<string>, 
+        reloadFiles? : Array<string>
+    }) {
+        const errors : Error[] = []
+
+        // remove files first before adding in event of re-naming files!
+
+        if (removeFiles) {
+            const error = await this.unloadModule(removeFiles)
+            errors.push(...error)
+        }
+
+        if (reloadFiles) {
+            const error = await this.reloadModule(reloadFiles)
+            errors.push(...error)
+        }
+
+        if (addFiles) {
+            const error = await this.loadModule(addFiles)
+            errors.push(...error)
         }
 
         return errors

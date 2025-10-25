@@ -11,7 +11,6 @@ import path from 'path'
 // to the same class, hence a typeof check will fail, even tho in reality they maybe the same class.
 
 // one getaround which is not ideal but works is using the class.name, to check if the names match
-// in error handling this can be useful
 
 export class Reload { 
     @Commands.command('reload', new StringTransformer(true))
@@ -29,7 +28,7 @@ export class Reload {
             `@/${path.join(moduleFolder, file)}`,
         )
         
-        reloadCallback(ctx, file, error)
+        reloadResult(ctx, file, error)
     }
 }
 
@@ -42,27 +41,16 @@ async function reloadAll(ctx : Context) {
     const reloadFiles = files.filter(x => ctx.globals.moduleLoader.moduleCommandTree.hasOwnProperty(x))
     const addFiles = files.filter(x => !(ctx.globals.moduleLoader.moduleCommandTree.hasOwnProperty(x)))
 
-    const errors : Array<Error> = []
+    const errors = await ctx.globals.moduleLoader.handleReload({
+        addFiles, 
+        removeFiles, 
+        reloadFiles
+    })
 
-    {
-        const error = await ctx.globals.moduleLoader.unloadModule(removeFiles)
-        errors.push(...error)
-    }
-
-    {
-        const error = await ctx.globals.moduleLoader.reloadModule(reloadFiles)
-        errors.push(...error)
-    }
-
-    {
-        const error = await ctx.globals.moduleLoader.loadModule(addFiles)
-        errors.push(...error)
-    }
-
-    reloadCallback(ctx, 'all', errors)
+    reloadResult(ctx, 'all', errors)
 }
 
-function reloadCallback(ctx : Context, file : string, errors : Array<Error>) {
+function reloadResult(ctx : Context, file : string, errors : Array<Error>) {
     const fileDescription = file === 'all' ? 'all modules' : `module: ${file}`
 
     if (errors.length === 0) {
