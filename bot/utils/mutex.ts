@@ -2,9 +2,8 @@ export class Mutex {
   private mutex = Promise.resolve();
 
   lock(): Promise<() => void> {
-    const lastMutex = this.mutex;
     return new Promise((resolve) => {
-      this.mutex = lastMutex.then(() => new Promise(resolve));
+      this.mutex = this.mutex.then(() => new Promise(resolve));
     });
   }
 }
