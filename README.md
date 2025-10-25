@@ -58,16 +58,14 @@ async function main() {
         BaseGlobals
     )
 
-    await commandProcessor.moduleLoader.scheduleEvent(
-        "load", 
-        await getModuleFiles(moduleFolder), 
-        error => {
-            if (error.length > 0)
-                console.log(error)
-            else
-                console.log("loaded files!")
-        }
+    const error = await commandProcessor.moduleLoader.loadModule(
+        await getModuleFiles(), 
     )
+
+    if (error.length > 0)
+        console.log(error)
+    else
+        console.log("loaded files!")
 
     for await (const line of console)
         commandProcessor.processCommands(prefix, line)

@@ -12,16 +12,14 @@ async function main() {
         { ...stringRegistry }
     )
 
-    await commandProcessor.moduleLoader.scheduleEvent(
-        "load", 
+    const error = await commandProcessor.moduleLoader.loadModule(
         await getModuleFiles(), 
-        error => {
-            if (error.length > 0)
-                console.log(error)
-            else
-                console.log("loaded files!")
-        }
     )
+
+    if (error.length > 0)
+        console.log(error)
+    else
+        console.log("loaded files!")
 
     // on message call -- process command:
     for await (const line of console) {

@@ -1,9 +1,9 @@
 import { cloneDeepWith } from 'lodash'
 import { buffers, clearCache, parentVarName, cacheFlag, type typedCls, type BaseGlobals } from './internals'
-import Queue from './utils/queue'
 import path from 'node:path'
 import { EventNames } from './internals'
 import { IntervalHandler } from './intervals'
+import { Mutex, withMutex } from './utils/mutex'
 
 interface ModuleCommandsObj { 
     [key: string] : ModuleCommands
@@ -36,18 +36,6 @@ interface SubCommandObj {
     [key: string] : SubCommand
 }
 
-// creates a module > command tree, this is for adding and removing commands only!
-// creates a flat command array,
-
-type eventCallBack = (errors : Array<Error>) => any
-
-interface Event { 
-    type : EventType,
-    file : Array<string>
-    callback : eventCallBack
-}
-
-type EventType = "load" | "unload" | "reload" 
 
 export class ModuleLoader {
 
@@ -56,33 +44,13 @@ export class ModuleLoader {
     eventListener : ListenerEvents = {}
     intervals : IntervalEvents = {}
 
-    private events = new Queue<Event>()
     private readonly globals : BaseGlobals
+
+    static readonly mutex = new Mutex();
 
     constructor(globals : BaseGlobals) {
         
         this.globals = globals;
-
-        // we use an IIFE in constructor so there is never more than one consumer running at any given time within ModuleLoader instance. 
-        (async () => {
-            while (true) { 
-                const event = await this.events.get()
-
-                if (event === undefined) continue;
- 
-                await this.handleEvent(event)
-            }
-        })();
-    }
-
-    async scheduleEvent(event : EventType, files : string | Array<string>, callback : eventCallBack = () => {}) {
-        const eventFile = Array.isArray(files) ? files : [files]
-
-        await this.events.put({
-            type : event,
-            file : eventFile,
-            callback : callback
-        })
     }
 
     private async loadFile(file : string) {
@@ -143,7 +111,9 @@ export class ModuleLoader {
         }
     }
 
-    private async loadModuleHandler(files : Array<string>, callback : eventCallBack) {
+    @withMutex(ModuleLoader.mutex)
+    async loadModule(files : string | Array<string>) {
+        if (typeof files === 'string') files = [files]
 
         const errors : Array<Error> = []
  
@@ -179,10 +149,16 @@ export class ModuleLoader {
             }
         }
 
-        await callback(errors)
+        return errors
     }
 
-    private async unloadModuleHandler(files : Array<string> | string, callback : eventCallBack, reloading : boolean = false) {
+    @withMutex(ModuleLoader.mutex)
+    async unloadModule(files : string | Array<string>) {
+        return this.unloadModuleHandler(files)
+    }
+
+    async unloadModuleHandler(files : string | Array<string>, reloading : boolean = false) {
+        if (typeof files === 'string') files = [files]
 
         const errors : Array<Error> = []
 
@@ -215,11 +191,13 @@ export class ModuleLoader {
             }
         }
 
-        await callback(errors)
+        return errors
     }
 
-    private async reloadModuleHandler(files : Array<string>, callback : eventCallBack) {
-        
+    @withMutex(ModuleLoader.mutex)
+    async reloadModule(files : string | Array<string>) {
+        if (typeof files === 'string') files = [files]
+
         const errors : Array<Error> = []
 
         for (let file of files) {
@@ -239,9 +217,9 @@ export class ModuleLoader {
 
                 await this.globals.commandProcessor.callEvent(EventNames.onLoad, this.globals, file)
 
-                await this.unloadModuleHandler([file], callbackError => {
-                    errors.push(...callbackError)
-                }, true)
+                const unloadErrors = await this.unloadModuleHandler([file], true)
+
+                errors.push(...unloadErrors)
 
                 this.commands = copyCommands
                 this.moduleCommandTree[file] = moduleTree
@@ -256,7 +234,7 @@ export class ModuleLoader {
             }
         }
 
-        await callback(errors)
+        return errors
     }
 
     private checkCommands(commandBufferMap : CommandBufferMap, module : string) {
@@ -486,25 +464,6 @@ export class ModuleLoader {
             val.stop()
             delete intervalsMap[key]
         };
-    }
-
-    private async handleEvent(event : Event) { 
-        switch (event.type) {
-            case "load" : {
-                await this.loadModuleHandler(event.file, event.callback)
-                break
-            }
-
-            case "unload": {
-                await this.unloadModuleHandler(event.file, event.callback)
-                break
-            }
-
-            case "reload" : {
-                await this.reloadModuleHandler(event.file, event.callback)
-                break
-            }
-        }
     }
 
 }

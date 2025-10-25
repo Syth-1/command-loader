@@ -25,11 +25,11 @@ export class Reload {
         
         console.log(`reloading module: ${file}`)
 
-        ctx.globals.moduleLoader.scheduleEvent(
-            'reload',
+        const error = await ctx.globals.moduleLoader.reloadModule(
             `@/${path.join(moduleFolder, file)}`,
-            (err) => reloadCallback(ctx, file, err)
         )
+        
+        reloadCallback(ctx, file, error)
     }
 }
 
@@ -44,17 +44,22 @@ async function reloadAll(ctx : Context) {
 
     const errors : Array<Error> = []
 
-    await ctx.globals.moduleLoader.scheduleEvent(
-        'unload',
-        removeFiles,
-        (err) => errors.push(...err)
-    )
+    {
+        const error = await ctx.globals.moduleLoader.unloadModule(removeFiles)
+        errors.push(...error)
+    }
 
-    await ctx.globals.moduleLoader.scheduleEvent(
-        'reload',
-        [...reloadFiles, ...addFiles],
-        (err) => reloadCallback(ctx, 'all', [...errors, ...err])
-    )
+    {
+        const error = await ctx.globals.moduleLoader.reloadModule(reloadFiles)
+        errors.push(...error)
+    }
+
+    {
+        const error = await ctx.globals.moduleLoader.loadModule(addFiles)
+        errors.push(...error)
+    }
+
+    reloadCallback(ctx, 'all', errors)
 }
 
 function reloadCallback(ctx : Context, file : string, errors : Array<Error>) {
