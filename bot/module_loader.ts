@@ -66,7 +66,7 @@ export class ModuleLoader {
             if (!isClass(cls)) continue
 
             // instance the class we want to bind to!
-            const instancedCls = new cls()
+            const instancedCls = new cls(this.globals)
 
             // load events
             const events = buffers.EventBuffer.read(cls)
