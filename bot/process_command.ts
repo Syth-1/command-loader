@@ -28,7 +28,7 @@ export class CommandProcessor<
     constructor(
         contextCls : T, 
         globals : U | (new () => U), 
-        transformerRegistry : {[name : string] : TransformerRegistry[string]} = {}
+        transformerRegistry : TransformerRegistry = {}
     ) {
     
         for (const [key, value] of Object.entries(transformerRegistry)) {
