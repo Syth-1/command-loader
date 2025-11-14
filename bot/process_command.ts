@@ -181,6 +181,10 @@ export class CommandProcessor<
                     if (nestedCommandObj.onCommandNotFound != undefined) {
                         const onCommandNotFound = nestedCommandObj.onCommandNotFound
                         
+                        parent.pop() // remove last parent as it was not found!
+                        ctx.parent = parent 
+                        ctx.content = lastCommandName + " " + commandParser.getRestOfString()
+
                         ctx.commandObj = onCommandNotFound as Commands
 
                         this.tryExecuteCommand(onCommandNotFound.cls, onCommandNotFound.command, ctx)
