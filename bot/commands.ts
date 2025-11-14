@@ -29,10 +29,17 @@ type parentArg = AtLeastOne<parent>
 
 type Class = { new(...args: any[]): any; }; 
 
+const ignoreSubscribe = [
+    'onDefaultCommand',
+    'onCommandNotFound',
+]
+
 export class Commands {
 
     static command(commandInfo? : commandName | string | Array<string> | null, ...rest : Array<undefined | null | BaseTransformer<any>>) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
+
+            if (ignoreSubscribe.includes(methodName)) return
 
             let commandName : string
             let alias : Array<string> = []
