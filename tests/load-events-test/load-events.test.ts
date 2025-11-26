@@ -2,7 +2,7 @@ import { CommandProcessor } from '@/process_command'
 import { getModuleFiles } from '@/file'
 import { Context } from '@/test-context';
 import { expect, test } from "bun:test";
-import Future from '@/utils/future';
+import Future from '@/future';
 import { withTimeout } from '@/test-utils';
 import { Globals } from './globals';
 
@@ -19,16 +19,14 @@ async function main() {
 
     const loadingFilesFuture = new Future<boolean>
 
-    await commandProcessor.moduleLoader.scheduleEvent(
-        "load", 
+    const loadErrors = await commandProcessor.moduleLoader.loadModule(
         await getModuleFiles(__dirname, moduleFolder), 
-        error => {
-            if (error.length > 0)
-                throw error
-            else
-                loadingFilesFuture.resolve(true)
-        }
     )
+
+    if (loadErrors.length > 0)
+        throw AggregateError(loadErrors)
+    else 
+        loadingFilesFuture.resolve(true)
     
     // wait for files to load!
     await withTimeout(loadingFilesFuture.promise, 100, 
@@ -47,16 +45,14 @@ async function main() {
 
     const reloadFilesFuture = new Future<boolean>
     
-    await commandProcessor.moduleLoader.scheduleEvent(
-        "reload", 
+    const reloadErrors = await commandProcessor.moduleLoader.reloadModule(
         await getModuleFiles(__dirname, moduleFolder), 
-        error => {
-            if (error.length > 0)
-                throw error
-            else
-                reloadFilesFuture.resolve(true)
-        }
     )
+
+    if (reloadErrors.length > 0)
+        throw AggregateError(reloadErrors)
+    else 
+        reloadFilesFuture.resolve(true)
 
     // wait for files to reload!
     await withTimeout(reloadFilesFuture.promise, 100, 

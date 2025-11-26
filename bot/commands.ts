@@ -16,7 +16,8 @@ import {
     getFunctionFromCls,
 
     ArgsMetadata,
-    DescMetadata
+    DescMetadata,
+    ParamMetadata
 } from "./internals";
 
 
@@ -78,6 +79,17 @@ export class Commands {
             }
 
             const childFunction : CommandFunction = descriptor.value;
+
+            // get param based transformers
+            for (let i = 0; i < argsInfo.length; i++) {
+                if (rest[i]) continue // only if its null or undefined we check metadata key
+                
+                const paramMetadata = ParamMetadata.getParamMetadata(methodClass, methodName, i)
+                
+                if (!paramMetadata) continue
+
+                rest[i] = paramMetadata
+            }
 
             descriptor.value = async function (ctx : Context, args : string) {
                 const validatedArgs = await validateArgs(ctx, args, argsInfo, rest, childFunction.length - 1)

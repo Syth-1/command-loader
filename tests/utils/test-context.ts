@@ -1,5 +1,5 @@
 import { BaseContext } from "../../bot/process_command"
-import Future from "../../bot/utils/future"
+import Future from "./future"
 
 export class Context extends BaseContext {
     future : InstanceType<typeof Future>
