@@ -120,7 +120,12 @@ export class ParamMetadata {
     
     public static setParamMetadata(transformerFunction : BaseTransformer<any>) {
       return (target: Object, propertyKey: string | symbol, parameterIndex: number) => {
-        Reflect.defineMetadata(ParamMetadata.ParamMetadataKey.toString() + parameterIndex, transformerFunction, target, propertyKey);
+        Reflect.defineMetadata(
+            ParamMetadata.ParamMetadataKey.toString() + (parameterIndex - 1), 
+            transformerFunction, 
+            target, 
+            propertyKey
+        );
       };
     }
 
