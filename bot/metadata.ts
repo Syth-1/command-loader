@@ -89,7 +89,7 @@ export class DescMetadata {
     }
 
     public static setDescMetadata(description : string, cls : any, methodName : string | undefined) { 
-        methodName = getFuncName(methodName)
+        methodName = methodName ? getFuncName(methodName) : undefined
 
         if (methodName)
             Reflect.defineMetadata(
