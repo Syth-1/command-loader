@@ -40,8 +40,6 @@ export class Commands {
     static command(commandInfo? : commandName | string | Array<string> | null, ...rest : Array<undefined | null | BaseTransformer<any>>) {
         return (methodClass : any, methodName : string, descriptor: PropertyDescriptor) => {
 
-            if (ignoreSubscribe.includes(methodName)) return
-
             let commandName : string
             let alias : Array<string> = []
 
@@ -121,6 +119,7 @@ export class Commands {
             // add back the original method name!
             Object.defineProperty(descriptor.value, "name", { value: methodName });
 
+            if (ignoreSubscribe.includes(methodName)) return
 
             buffers.CommandBuffer.add([commandName, ...alias], methodClass, descriptor.value)
         }
