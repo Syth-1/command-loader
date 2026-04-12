@@ -171,7 +171,7 @@ export class CommandProcessor<
                 
                 if (lastCommandName.length === 0) {
                     if (nestedCommandObj.onDefaultCommand != undefined) {
-                        return nestedCommandObj.onDefaultCommand as Commands // default command is just command function without any additional params.
+                        return nestedCommandObj.onDefaultCommand  // default command is just command function without any additional params.
                     }
                     return
                 }
