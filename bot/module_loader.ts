@@ -157,6 +157,12 @@ export class ModuleLoader {
         return this.unloadModuleHandler(files)
     }
 
+    @withMutex(ModuleLoader.mutex)
+    async unloadAllModules() {
+        const files = Object.keys(this.moduleCommandTree)
+        return this.unloadModuleHandler(files)
+    }
+
     private async unloadModuleHandler(files : string | Array<string>, reloading : boolean = false) {
         if (typeof files === 'string') files = [files]
 
