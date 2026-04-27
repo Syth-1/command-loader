@@ -28,7 +28,7 @@ export class CommandProcessor<
     constructor(
         contextCls : T, 
         globals : U | (new () => U), 
-        transformerRegistry : {[name : string] : TransformerRegistry[string]} = {}
+        transformerRegistry : TransformerRegistry = {}
     ) {
     
         for (const [key, value] of Object.entries(transformerRegistry)) {
@@ -152,7 +152,7 @@ export class CommandProcessor<
         ctx : Context, 
         commandName : string
     ) {
-        const parent = []
+        ctx.parent = []
         let lastCommandName = commandName
         while (true) {
             if (typeof commandObj === 'object' && !commandObj.hasOwnProperty("cls")) {
@@ -166,12 +166,12 @@ export class CommandProcessor<
 
                 let nestedCommandObj = commandObj as NestedCommandObj
 
-                parent.push(lastCommandName)
-                lastCommandName = commandParser.getArg().toLowerCase()
+                ctx.parent.push(lastCommandName)
+                lastCommandName = commandParser.peekArg().toLowerCase()
                 
                 if (lastCommandName.length === 0) {
                     if (nestedCommandObj.onDefaultCommand != undefined) {
-                        return nestedCommandObj.onDefaultCommand as Commands // default command is just command function without any additional params.
+                        return nestedCommandObj.onDefaultCommand  // default command is just command function without any additional params.
                     }
                     return
                 }
@@ -180,17 +180,13 @@ export class CommandProcessor<
                 if (nestedCommandObj.commands[lastCommandName] === undefined) {
                     if (nestedCommandObj.onCommandNotFound != undefined) {
                         const onCommandNotFound = nestedCommandObj.onCommandNotFound
-                        
-                        ctx.commandObj = onCommandNotFound as Commands
-
-                        this.tryExecuteCommand(onCommandNotFound.cls, onCommandNotFound.command, ctx)
-                        return
+                        return onCommandNotFound as Commands
                     }
                 }
                 
                 commandObj = nestedCommandObj.commands[lastCommandName]
+                commandParser.getArg() // consume arg
             } else{
-                ctx.parent = parent 
                 ctx.commandName = lastCommandName
                 return commandObj as Commands
             }

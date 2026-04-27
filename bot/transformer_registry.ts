@@ -5,11 +5,13 @@ import {
     type BaseTransformer 
 } from "./internals";
 
+export interface TransformerFunction {
+    name : string,
+    func: BaseTransformer<any>['handleConstraint']
+}
+
 export interface TransformerRegistry {
-    [key: string]: {
-        name : string,
-        func: BaseTransformer<any>['handleConstraint']
-    }
+    [key: string]: TransformerFunction
 }
 
 const baseRegistry : TransformerRegistry = {

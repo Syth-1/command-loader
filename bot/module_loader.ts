@@ -15,12 +15,12 @@ interface BaseCommands {
 }
 
 interface ModuleCommands extends BaseCommands {
-    class : Array<Class>
+    class : Array<ModuleLike>
 }
 
 
 type PartialCommands = {
-    cls : Class, 
+    cls : ModuleLike, 
     command : Function
 }
 
@@ -157,6 +157,12 @@ export class ModuleLoader {
         return this.unloadModuleHandler(files)
     }
 
+    @withMutex(ModuleLoader.mutex)
+    async unloadAllModules() {
+        const files = Object.keys(this.moduleCommandTree)
+        return this.unloadModuleHandler(files)
+    }
+
     private async unloadModuleHandler(files : string | Array<string>, reloading : boolean = false) {
         if (typeof files === 'string') files = [files]
 
@@ -289,7 +295,7 @@ export class ModuleLoader {
         return {copyCommands, moduleTree}
     }
 
-    private addChildCommands(parent : NonEmptyArray<string>, commandsToAdd : CommandBufferObj, cls : Class, commands : SubCommandObj, nestedCommandObj : CommandsCollection) : undefined {
+    private addChildCommands(parent : NonEmptyArray<string>, commandsToAdd : CommandBufferObj, cls : ModuleLike, commands : SubCommandObj, nestedCommandObj : CommandsCollection) : undefined {
         // returns commands tree + commandsObj
 
         const child = parent.shift()!
@@ -332,21 +338,20 @@ export class ModuleLoader {
 
         type booleanKeysOfSubcommand = KeysOfType<SubCommand, boolean>
 
-        const functionKeys : Array<booleanKeysOfSubcommand> = [
-            'onDefaultCommand',
-            "onCommandNotFound",
+        const functionKeys : UnionToTuple<booleanKeysOfSubcommand> = [
+            "onCommandNotFound", 
+            "onDefaultCommand"
         ]
 
         for (const key of functionKeys) {
-            const typedKey = key as keyof Class || undefined;
-            const func : Function | undefined = cls[typedKey] || cls.prototype?.[typedKey]
+
+            const func : Function | undefined = cls[key] || cls.prototype?.[key]
 
             if (func === undefined) continue
 
-            childObj[key] = true as any // ts does not recognize its keys for booleans only
+            childObj[key] = true
 
-            //@ts-ignore
-            commandObj[typedKey] = {
+            commandObj[key] = {
                 cls : cls,
                 command : func.bind(cls)
             }

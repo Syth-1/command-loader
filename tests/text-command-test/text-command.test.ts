@@ -2,7 +2,7 @@ import { BaseGlobals, CommandProcessor } from '@/process_command'
 import { getModuleFiles } from '@/file'
 import { Context } from '@/test-context';
 import { expect, test } from "bun:test";
-import Future from '@/utils/future';
+import Future from '@/future';
 import { withTimeout } from '@/test-utils';
 
 const prefix = ''
@@ -17,18 +17,15 @@ async function main() {
 
     const loadingFilesFuture = new Future<boolean>
 
-    await commandProcessor.moduleLoader.scheduleEvent(
-        "load", 
+    const errors = await commandProcessor.moduleLoader.loadModule(
         await getModuleFiles(__dirname, moduleFolder), 
-        error => {
-            if (error.length > 0)
-                throw error
-            else
-                loadingFilesFuture.resolve(true)
-        }
     )
 
-    
+    if (errors.length > 0)
+        throw AggregateError(errors)
+    else 
+        loadingFilesFuture.resolve(true)
+
     // wait for files to load!
     await withTimeout(loadingFilesFuture.promise, 100, 
         'took too long loading files!'

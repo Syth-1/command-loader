@@ -1,4 +1,5 @@
 import { getFuncName } from "./utils/func-name";
+import type { BaseTransformer } from "./transformer";
 
 export class ArgsMetadata {
     private static readonly ArgsMetadataKey = Symbol('__argsNames__')
@@ -88,7 +89,7 @@ export class DescMetadata {
     }
 
     public static setDescMetadata(description : string, cls : any, methodName : string | undefined) { 
-        methodName = getFuncName(methodName)
+        methodName = methodName ? getFuncName(methodName) : undefined
 
         if (methodName)
             Reflect.defineMetadata(
@@ -103,4 +104,29 @@ export class DescMetadata {
             cls,
         )
     }
+}
+
+export class ParamMetadata { 
+
+    private static readonly ParamMetadataKey = Symbol('__ParamMetadata__')
+
+    public static getParamMetadata(methodClass : any, methodName : string | symbol, index : number) : BaseTransformer<any> | undefined {
+        return Reflect.getMetadata(
+            ParamMetadata.ParamMetadataKey.toString() + index, 
+            methodClass, 
+            methodName
+        )
+    }
+    
+    public static setParamMetadata(transformerFunction : BaseTransformer<any>) {
+      return (target: Object, propertyKey: string | symbol, parameterIndex: number) => {
+        Reflect.defineMetadata(
+            ParamMetadata.ParamMetadataKey.toString() + (parameterIndex - 1), 
+            transformerFunction, 
+            target, 
+            propertyKey
+        );
+      };
+    }
+
 }
