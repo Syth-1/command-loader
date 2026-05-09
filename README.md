@@ -40,16 +40,26 @@ Ensure the following is added to `tsconfig.json`:
 main script:
 ```typescript
 import { CommandProcessor, BaseGlobals, BaseContext } from './command-loader/bot/process_command'
-import { readdir } from 'node:fs/promises'
 import path from 'path'
 
 const moduleFolder = "modules"
 const prefix = '/'
 
-async function getModuleFiles(folder : string) {
-    return (await readdir(`./${folder}`))
-        .map(file => import.meta.resolve(`./${path.join(folder, file)}`)
-    )
+export async function getModuleFiles(moduleFolder: string) {
+    const baseDir = path.join(path.dirname(Bun.main), moduleFolder);
+    const glob = new Bun.Glob("**/*");
+
+    const files: string[] = [];
+
+    for await (const file of glob.scan({
+        cwd: baseDir,
+        onlyFiles: true,
+        absolute: true,
+    })) {
+        files.push(file);
+    }
+
+    return files;
 }
 
 async function main() {
