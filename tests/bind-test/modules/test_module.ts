@@ -1,6 +1,6 @@
 import { Commands } from "@/commands";
 import type { Context } from "@/test-context";
-import type Future from "@/utils/future";
+import type Future from "@/future";
 
 export class Test { 
 

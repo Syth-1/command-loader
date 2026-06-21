@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "bun test tests/*-test/*.test.ts",
-    "generate-test": "bun run tests/generate-test.ts"
+    "generate-test": "bun run tests/generate-test.ts",
+    "update-tsconfig": "bun run tests/update-tsconfig.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.2.11",
